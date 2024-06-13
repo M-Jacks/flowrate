@@ -37,7 +37,7 @@ app.use(methodOverride('_method'));
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Serve static HTML files
-app.use(express.static('views'));
+app.use(express.static(path.join(__dirname, 'views')));
 
 // Initialize Passport
 initializePassport(
