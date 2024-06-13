@@ -90,12 +90,25 @@ app.post('/signup', checkNotAuthenticated, async (req, res) => {
 
   const client = await pool.connect();
   try {
-    const { rows } = await client.query('SELECT email FROM users WHERE email = $1', [email]);
+    // Check if users table exists, create if it doesn't
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS users (
+        id SERIAL PRIMARY KEY,
+        first_name VARCHAR(100),
+        last_name VARCHAR(100),
+        email VARCHAR(255),
+        password VARCHAR(255),
+        date DATE DEFAULT CURRENT_DATE
+      );
+    `);
 
+    // Check if email is already registered
+    const { rows } = await client.query('SELECT email FROM users WHERE email = $1', [email]);
     if (rows.length > 0) {
       return res.status(400).json({ message: 'Email is already registered' });
     }
 
+    // Insert new user into the users table
     await client.query('INSERT INTO users (first_name, last_name, email, password) VALUES ($1, $2, $3, $4)', [firstName, lastName, email, hashedPassword]);
 
     res.status(201).json({ message: 'User registered successfully!' });
@@ -107,23 +120,48 @@ app.post('/signup', checkNotAuthenticated, async (req, res) => {
   }
 });
 
+
 // Login route
-app.post('/login', checkNotAuthenticated, (req, res, next) => {
-  passport.authenticate('local', (err, user, info) => {
-    if (err) {
-      return res.status(500).json({ message: 'Internal Server Error' });
-    }
-    if (!user) {
-      return res.status(400).json({ message: info.message });
-    }
-    req.logIn(user, (err) => {
+app.post('/login', checkNotAuthenticated, async (req, res, next) => {
+  const { email, password } = req.body;
+
+  const client = await pool.connect();
+  try {
+    // Check if users table exists, create if it doesn't
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS users (
+        id SERIAL PRIMARY KEY,
+        first_name VARCHAR(100),
+        last_name VARCHAR(100),
+        email VARCHAR(255),
+        password VARCHAR(255),
+        date DATE DEFAULT CURRENT_DATE
+      );
+    `);
+
+    // Authenticate user
+    passport.authenticate('local', (err, user, info) => {
       if (err) {
         return res.status(500).json({ message: 'Internal Server Error' });
       }
-      return res.status(200).json({ message: 'Login successful' });
-    });
-  })(req, res, next);
+      if (!user) {
+        return res.status(400).json({ message: info.message });
+      }
+      req.logIn(user, (err) => {
+        if (err) {
+          return res.status(500).json({ message: 'Internal Server Error' });
+        }
+        return res.status(200).json({ message: 'Login successful' });
+      });
+    })(req, res, next);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Internal Server Error' });
+  } finally {
+    client.release();
+  }
 });
+
 
 // Logout route
 app.delete('/logout', (req, res) => {
