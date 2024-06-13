@@ -1,5 +1,5 @@
 if (process.env.NODE_ENV !== 'production') {
-  require('dotenv').config();
+  require('dotenv').config({ path: '.env.development.local' });
 }
 
 const express = require('express');
@@ -15,13 +15,12 @@ const app = express();
 
 // PostgreSQL connection configuration
 const pool = new Pool({
-  user: process.env.DB_USER,
-  host: process.env.DB_HOST,
-  database: process.env.DB_NAME,
-  password: process.env.DB_PASSWORD,
-  port: process.env.DB_PORT || 5432, // default PostgreSQL port
+  user: process.env.POSTGRES_USER,
+  host: process.env.POSTGRES_HOST,
+  database: process.env.POSTGRES_DATABASE,
+  password: process.env.POSTGRES_PASSWORD,
+  port: process.env.POSTGRES_PORT || 5432, // default PostgreSQL port
 });
-
 
 // Middleware
 app.use(express.json());
@@ -60,31 +59,39 @@ initializePassport(
   }
 );
 
+// Middleware to check if user is not authenticated
+function checkNotAuthenticated(req, res, next) {
+  if (req.isAuthenticated()) {
+    return res.redirect('/');
+  }
+  next();
+}
+
 // Signup route
 app.post('/signup', checkNotAuthenticated, async (req, res) => {
-    const { firstName, lastName, email, password } = req.body;
-  
-    // Hash the password
-    const hashedPassword = await bcrypt.hash(password, 10);
-  
-    const client = await pool.connect();
-    try {
-      const { rows } = await client.query('SELECT email FROM users WHERE email = $1', [email]);
-  
-      if (rows.length > 0) {
-        return res.status(400).json({ message: 'Email is already registered' });
-      }
-  
-      await client.query('INSERT INTO users (first_name, last_name, email, password) VALUES ($1, $2, $3, $4)', [firstName, lastName, email, hashedPassword]);
-  
-      res.status(201).json({ message: 'User registered successfully!' });
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ message: 'Internal Server Error' });
-    } finally {
-      client.release();
+  const { firstName, lastName, email, password } = req.body;
+
+  // Hash the password
+  const hashedPassword = await bcrypt.hash(password, 10);
+
+  const client = await pool.connect();
+  try {
+    const { rows } = await client.query('SELECT email FROM users WHERE email = $1', [email]);
+
+    if (rows.length > 0) {
+      return res.status(400).json({ message: 'Email is already registered' });
     }
-  });
+
+    await client.query('INSERT INTO users (first_name, last_name, email, password) VALUES ($1, $2, $3, $4)', [firstName, lastName, email, hashedPassword]);
+
+    res.status(201).json({ message: 'User registered successfully!' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Internal Server Error' });
+  } finally {
+    client.release();
+  }
+});
 
 // Login route
 app.post('/login', checkNotAuthenticated, (req, res, next) => {
