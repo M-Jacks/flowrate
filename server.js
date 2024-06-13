@@ -1,5 +1,5 @@
 if (process.env.NODE_ENV !== 'production') {
-  require('dotenv').config({ path: '.env.development.local' });
+  require('dotenv').config();
 }
 
 const express = require('express');
@@ -25,10 +25,21 @@ const pool = new Pool({
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+// Check if SESSION_SECRET is defined
+if (!process.env.SESSION_SECRET) {
+  console.error('SESSION_SECRET is not defined!');
+} else {
+  console.log('SESSION_SECRET is defined!');
+}
 app.use(session({
   secret: process.env.SESSION_SECRET,
   resave: false,
-  saveUninitialized: false
+  saveUninitialized: false,
+  cookie: {
+    secure: process.env.NODE_ENV === 'production', // Secure cookies in production
+    maxAge: 60000 // Set cookie expiration (example: 1 minute)
+  }
 }));
 
 app.use(passport.initialize());
