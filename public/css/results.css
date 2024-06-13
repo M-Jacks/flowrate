@@ -1,0 +1,123 @@
+
+body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+    padding: 0;
+    background-position: center;
+    background-image: url("image3.jpg");
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+}
+
+.centered-container {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: #ffffff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    /* Ensure the container expands to fit its contents */
+    display: flex;
+    flex-direction: column;
+}
+
+table {
+    border-collapse: collapse;
+    width: 20%;
+    margin: 10px auto;
+}
+
+th,
+td {
+    border: 1px solid #dddddd;
+    padding: 0.1px;
+    text-align: center;
+    font-size: small;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+th {
+    background-color: #7beb8c;
+}
+
+table tr:hover {
+    background-color: #afeecc;
+}
+
+.button-container {
+    position: relative;
+}
+
+.btn {
+    cursor: pointer;
+    position: relative;
+}
+
+.btn.has-tooltip::after {
+    content: attr(data-tooltip);
+    /* Retrieve tooltip content from data-tooltip attribute */
+    position: absolute;
+    top: -30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: rgb(248, 232, 10);
+    color: #0b0913;
+    padding: 5px 10px;
+    border-radius: 5px;
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+    z-index: 1;
+    /* Ensure tooltip is above other content */
+    font-style: italic;
+    /* Display tooltip content in italics */
+}
+
+.btn.has-tooltip:hover::after {
+    opacity: 1;
+}
+
+.btn-primary {
+    font-size: 24px;
+    padding: 10px 20px;
+    border-radius: 35px;
+    background-color: #7beb8c;
+    color: #000000;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.btn-primary:hover {
+    background-color: #72f9f6;
+    color: #000000;
+}
+
+.back-icon {
+    top: 20px;
+    left: 20px;
+    font-size: 40px;
+    color: #007bff;
+    cursor: pointer;
+}
+
+input[type="number"] {
+    width: 100%;
+    box-sizing: border-box;
+    border: transparent;
+    width: 120px;
+}
+
+/* Remove spinners from number input fields */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+#my-table td {
+    width: 30px;
+}        

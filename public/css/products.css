@@ -1,0 +1,288 @@
+body {
+  display: flex;
+  justify-content: top;
+  align-items: top;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+
+  background-color: azure;
+  background-position: center;
+  /* background-image: url("image3.jpg");*/
+  background-size: cover;
+  /* Scale the image to cover the entire element */
+  background-repeat: no-repeat;
+  /* Prevent image repetition */
+  background-attachment: fixed;
+  /* Keep the image fixed while scrolling */
+  font-family: Arial, sans-serif;
+}
+
+
+/* Basic header styling */
+header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  padding: 45px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 99;
+  background: rgb(117, 232, 205);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.header-image {
+  height: 50px;
+  width: auto;
+}
+
+.navigation a {
+  position: relative;
+  font-size: 1.1em;
+  color: white;
+  text-decoration: none;
+  font-weight: 500;
+  margin-left: 40px;
+}
+
+.navigation a::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: -6px;
+  width: 100%;
+  height: 3px;
+  background: white;
+  border-radius: 5px;
+  transform-origin: right;
+  transform: scaleX(0);
+  transition: transform 0.5s;
+}
+
+.navigation a:hover:after {
+  transform-origin: left;
+  transform: scaleX(1);
+}
+
+.navigation .btnLogin-popup {
+  width: 130px;
+  height: 50px;
+  margin-right: 20px;
+  background: transparent;
+  border: 2px solid white;
+  outline: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1.1em;
+  color: white;
+  font-weight: 500;
+  margin-left: 40px;
+  transition: 0.5s;
+}
+
+.navigation .btnLogin-popup:hover {
+  background: white;
+  color: grey;
+}
+
+.menu-toggle {
+  display: none;
+  font-size: 24px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: white;
+}
+
+/* Responsive styling */
+@media (max-width: 768px) {
+  .header-image {
+    height: 40px;
+  }
+
+  .navigation {
+    display: none;
+    flex-direction: column;
+    position: absolute;
+    top: 100px;
+    /* Adjusted to accommodate the header height */
+    right: 10px;
+    background: rgb(117, 232, 205);
+    border: 1px solid #ccc;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    padding: 10px;
+  }
+
+  .navigation a,
+  .navigation button {
+    margin: 10px 0;
+  }
+
+  .menu-toggle {
+    display: block;
+  }
+
+  .navigation.active {
+    display: flex;
+  }
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+
+.centered-container {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 20px;
+  background: transparent;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-top: calc(30px + 40px + 10px);
+  /* Calculate based on header padding and an extra gap */
+  display: flex;
+  width: 1000px;
+  flex-direction: column;
+}
+
+/* Adjust the body to provide some padding for scrolling */
+body {
+  padding-top: calc(30px + 40px);
+  /* Ensure the body padding matches header height */
+}
+
+
+h1 {
+  color: #333;
+  font-size: 48px;
+}
+
+h3 {
+  color: #666;
+  font-size: 24px;
+  margin-bottom: 30px;
+}
+
+table {
+  border-collapse: collapse;
+  width: 800PX;
+  margin: 0 auto;
+  background-color: #fff;
+  border-radius: 10px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+th,
+td {
+  padding: 20px;
+  text-align: center;
+  border-bottom: 1px solid #ddd;
+}
+
+th {
+  font-size: 28px;
+  background-color: #7beb8c;
+}
+
+tr:hover {
+  background-color: #afeee8;
+  font-size: 22px;
+  font-weight: 600;
+}
+
+tbody tr {
+  cursor: pointer;
+  position: relative;
+}
+
+
+.icon {
+  width: 30px;
+  height: 30px;
+  margin-bottom: -8px;
+}
+
+.paragraph-container {
+  width: 60%;
+  margin: 0 auto;
+  text-align: left;
+
+}
+
+
+
+/* Modal styles */
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 1;
+  left: 0;
+  justify-self: center;
+  width: 60%;
+  height: 100vh;
+  overflow: auto;
+  background-color: rgba(0, 0, 0, 0.4);
+}
+
+.modal-content {
+  background-color: #fefefe;
+  margin: 30% auto;
+  padding: 20px;
+  border: 1px solid #888;
+  width: 80%;
+}
+
+.btn {
+  font-size: 24px;
+  padding: 10px 20px;
+  border-radius: 35px;
+  background-color: #7beb8c;
+  color: #000000;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.btn:hover {
+  background-color: #72f9f6;
+  color: #000000;
+}
+
+.close {
+  color: #aaa;
+  float: right;
+  font-size: 28px;
+  font-weight: bold;
+}
+
+.close:hover,
+.close:focus {
+  color: rgb(237, 20, 20);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+/* Error message styles */
+.error-message {
+  color: red;
+  margin-top: 10px;
+}
+
+.otherProducts {
+  cursor: pointer;
+  color: #007bff;
+  font-size: 24px;
+  text-decoration: none;
+}
+
+li:hover {
+  color: rgb(20, 51, 20);
+  font-size: 26px;
+}

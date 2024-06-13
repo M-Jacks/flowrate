@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css"
+        integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <link rel="stylesheet" href="/css/comparison.css">
+
+    <title>FlowInsight: Compare results</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        .table-container {
+            display: flex;
+            flex-wrap: wrap;
+        }
+
+        .table-container table {
+            margin-right: 20px;
+            margin-bottom: 20px;
+        }
+
+        /* Style for each table */
+        #tables {
+            border-collapse: collapse;
+            width: 90%;
+            font-size: xx-small;
+        }
+
+        #table1 {
+            background-color: #8cc6f2;
+        }
+
+        #table2 {
+            background-color: rgb(244, 128, 128);
+        }
+
+        #table3 {
+            background-color: greenyellow;
+        }
+
+        #tables th,
+        #tables td {
+            border: 1px solid #dddddd;
+            text-align: left;
+            padding: 4px;
+        }
+
+        #listOfTest {
+            border-collapse: collapse;
+        }
+
+        #listOfTest th,
+        #listOfTest td {
+            border: 1px solid #dddddd;
+            text-align: left;
+            padding: 10px;
+        }
+
+        #tables tr:hover {
+            background-color: #afeee8;
+        }
+
+        #listOfTest tr:hover {
+            background-color: #afeee8;
+            margin-top: 50px;
+        }
+
+        #listOfTest .checkbox-column {
+            text-align: center;
+        }
+
+        .checkbox-column {
+            text-align: center;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        #chart-container {
+            width: 1200px;
+            /* Adjust the width as needed */
+            height: 600px;
+            /* Adjust the height as needed */
+            margin-top: 20px;
+            /* Add margin to create space between tables and chart */
+            margin-left: 10%;
+        }
+
+        .back-icon {
+            top: 20px;
+            left: 20px;
+            font-size: 40px;
+            color: #007bff;
+            cursor: pointer;
+        }
+
+        /* Style to limit table rows */
+        #listOfTest {
+            display: block;
+            max-height: 400px;
+            /* Adjust height as needed */
+            overflow-y: scroll;
+
+        }
+
+        #listOfTest thead th {
+            position: sticky;
+            top: 0;
+            background-color: #fff;
+            /* Adjust as needed */
+            z-index: 1;
+            background-color: #7beb8c;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #ffffff;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .help-link {
+            display: block;
+            margin-bottom: 10px;
+            text-decoration: none;
+            color: #007bff;
+        }
+
+        .help-link:hover {
+            text-decoration: underline;
+        }
+
+        .help-content {
+            display: none;
+        }
+
+        #searchInput:hover {
+            background-color: #afeecc;
+        }
+        .radioContainer{
+            justify-self: center;
+            margin-left: 400px;
+        }
+       
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+
+        <div class="row justify-content-between align-items-center">
+            <div class="col-auto">
+                <div class="back-icon" onclick="history.go(-1)" style="margin-left: 0;">
+                    &#8592;
+                </div>
+            </div>
+            <div>
+                <section id="getting-started">
+                    <h2>Getting Started with comparing test results</h2>
+                    <p>The table below shows all the tests from all the products tested at the lab. Comparison first
+                        invloves selection of the item to compare the results by, then selecting a minimum of two tests
+                        of
+                        which the results will be displayed in small tables below. Finally a selection of the comparison
+                        type has to be made in order to plot the graphs of the results of selected test.</p>
+                </section>
+            </div>
+            <div class="row justify-content-between align-items-center" style="width:100%">
+
+                <div class="col">
+                    <label for="columns">Compare tests by: </label>
+                    <select id="columns" onchange="selectColumn()">
+                        <option value="" selected disabled>Select one</option>
+                        <option value="1">Product</option>
+                        <option value="2">Device Id</option>
+                        <option value="3">Hardware Version</option>
+                        <option value="4">Firmware Version</option>
+                        <option value="5">Profile</option>
+                        <option value="6">Test Engineer</option>
+                        <option value="7">Power Source</option>
+                        <option value="8">Pump Type</option>
+                        <option value="8">Pump Serial No.</option>
+                    </select>
+                </div>
+                <label for="searchInput" class="col-auto">Search:</label>
+                <div class="col-auto">
+                    <input type="text" id="searchInput" class="form-control" placeholder="Search in tests">
+                </div>
+
+            </div>
+        </div>
+        <br>
+        <div class="table-responsive">
+            <table class="table table-bordered" id="listOfTest">
+                <thead>
+                    <tr>
+                        <th>Date Added</th>
+                        <th>Product</th>
+                        <th>Device Id</th>
+                        <th>Hardware Version</th>
+                        <th>Firmware Version</th>
+                        <th>Profile</th>
+                        <th>Test Engineer</th>
+                        <th>Power Source</th>
+                        <th>Pump Type</th>
+                        <th>Pump Serial No.</th>
+                        <th class="checkbox-column">Select</th> <!-- Added checkbox column header -->
+                    </tr>
+                </thead>
+                <tbody id="testTable">
+                    <!-- Table body rows will be populated dynamically -->
+                </tbody>
+            </table> <br>
+        </div>
+        <div class="radioContainer">
+            <div class="radio">
+                <label>Select Comparison Type:</label>
+                <div>
+                    <input type="radio" id="flowrate" name="comparisonType" value="flowrate">
+                    <label for="flowrate">Flowrate vs Head</label>
+                </div>
+                <div>
+                    <input type="radio" id="current" name="comparisonType" value="current">
+                    <label for="current">Current vs Head</label>
+                </div>
+                <div>
+                    <input type="radio" id="power" name="comparisonType" value="power">
+                    <label for="power">Power vs Head</label>
+                </div>
+            </div>
+        </div>
+        <br>
+
+        <div id="tables">
+            <div class="table-container">
+                <!-- Table 1 -->
+                <table id="table1" class="hidden">
+                    <caption style="font-weight: bold; font-size: 20px;"></caption>
+                    <tbody id="table1Body">
+                        <!-- Table body will be populated dynamically -->
+                    </tbody>
+                </table>
+                <table id="table2" class="hidden">
+                    <caption style="font-weight: bold; font-size: 20px;"></caption>
+                    <tbody id="table2Body">
+                        <!-- Table body will be populated dynamically -->
+                    </tbody>
+                </table>
+                <table id="table3" class="hidden">
+                    <caption style="font-weight: bold; font-size: 20px;"></caption>
+                    <tbody id="table3Body">
+                        <!-- Table body will be populated dynamically -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <!-- Container for chart -->
+        <div id="chart-container">
+            <canvas id="comparisonChart2"></canvas>
+            <br><br><br><br><br><br>
+        </div>
+    </div>
+    <div class="container">
+        <p class="help-link" onclick="toggleHelpContent()">Help</p>
+        <div class="help-content" id="help-content">
+            <section id="getting-started">
+                <h2>Getting Started</h2>
+                <p>Learn how to navigate FlowInsight and find what you're looking for.</p>
+            </section>
+        </div>
+    </div>
+    <!--Search-->
+    <script>
+        // Get the input element
+        const searchInput = document.getElementById('searchInput');
+        let messageRowCount = 0;
+
+        // Add event listener for input event
+        searchInput.addEventListener('input', function () {
+            // Get the search value and convert it to lowercase
+            const searchText = searchInput.value.toLowerCase();
+
+            // Get all table rows
+            const rows = document.querySelectorAll('#testTable tr');
+
+            // Variable to keep track of whether any rows were found
+            let rowsFound = false;
+
+            // Loop through all rows
+            rows.forEach(row => {
+                // Get the text content of each row and convert it to lowercase
+                const rowText = row.textContent.toLowerCase();
+
+                // Check if the row contains the search text
+                if (rowText.includes(searchText)) {
+                    // Show the row if it matches the search text
+                    row.style.display = '';
+                    rowsFound = true; // Set flag to true if row is found
+                } else {
+                    // Hide the row if it does not match the search text
+                    row.style.display = 'none';
+                }
+            })
+            // Display message if no rows were found
+            if (!rowsFound) {
+
+                // Create a new row
+                const noResultsRow = document.createElement('tr');
+
+                // Create a cell to span 11 columns
+                const noResultsCell = document.createElement('td');
+                noResultsCell.setAttribute('colspan', '10');
+                noResultsCell.textContent = 'Nothing matches your search.';
+
+                // Append the cell to the row
+                noResultsRow.appendChild(noResultsCell);
+
+                // Set an ID for the row to easily identify and remove it later
+                noResultsRow.setAttribute('id', 'noResultsRow');
+
+                // Append the row to the table
+                document.getElementById('testTable').appendChild(noResultsRow);
+                messageRowCount++;
+
+            } else {
+                // Remove all previous "No tests found" message created for every input character that didnt match
+                for (let j = 1; j < messageRowCount; j++) {
+                    const noResultsRow = document.getElementById('noResultsRow');
+                    if (noResultsRow) {
+                        noResultsRow.remove();
+                    }
+                }
+            }
+        });
+
+    </script>
+    <script>
+        function toggleHelpContent() {
+            const helpContent = document.getElementById('help-content');
+            helpContent.style.display = helpContent.style.display === 'block' ? 'none' : 'block';
+        }
+    </script>
+    <script>
+        const radioButtons = document.querySelectorAll('input[name="comparisonType"]');
+        let YAxistitle = 'flowrate'; // Default Y-axis title
+
+        radioButtons.forEach((button) => {
+            button.addEventListener('change', function () {
+                if (this.id === 'Flowrate') {
+                    YAxistitle = 'Flowrate (L/h)';
+                } else if (this.id === 'current') {
+                    YAxistitle = 'Current (A)';
+                } else if (this.id === 'power') {
+                    YAxistitle = 'Power (W)';
+                }
+                updateChart(YAxistitle);
+            });
+        });
+
+        function updateChart(YAxistitle) {
+            const selectedType = document.querySelector('input[name="comparisonType"]:checked').value;
+            const table1Data = extractTableValues('table1', selectedType);
+            const table2Data = extractTableValues('table2', selectedType);
+            let table3Data = null;
+
+            const table3 = document.getElementById('table3');
+            if (table3 && table3.querySelector('tr')) { // Check if table3 contains any rows
+                table3Data = extractTableValues('table3', selectedType);
+            }
+
+            const datasets = [
+                {
+                    label: document.getElementById('table1').querySelector('caption').textContent,
+                    data: table1Data.data,
+                    borderColor: 'blue',
+                    borderWidth: 2, // Adjust line width here
+                    fill: false,
+                    font: {
+                        size: 30
+                    }
+                },
+                {
+                    label: document.getElementById('table2').querySelector('caption').textContent,
+                    data: table2Data.data,
+                    borderColor: 'red',
+                    borderWidth: 2, // Adjust line width here
+                    fill: false,
+                    font: {
+                        size: 30
+                    }
+                }
+            ];
+
+            if (table3Data) {
+                datasets.push({
+                    label: document.getElementById('table3').querySelector('caption').textContent,
+                    data: table3Data.data,
+                    borderColor: 'green',
+                    borderWidth: 2, // Adjust line width here
+                    fill: false,
+                    font: {
+                        size: 30
+                    }
+                });
+            }
+
+            const comparisonData = {
+                labels: table1Data.labels,
+                datasets: datasets
+            };
+
+            const comparisonChartCanvas = document.getElementById('comparisonChart2').getContext('2d');
+
+            if (window.comparisonChart) {
+                window.comparisonChart.destroy();
+            }
+
+            window.comparisonChart = new Chart(comparisonChartCanvas, {
+                type: 'line',
+                data: comparisonData,
+                options: {
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Comparison Chart',
+                            font: {
+                                size: 24
+                            }
+                        },
+                        tooltip: {
+                            intersect: false
+                        }
+                    },
+                    scales: {
+                        x: {
+                            type: 'linear',
+                            position: 'bottom',
+                            title: {
+                                display: true,
+                                text: 'Head (m)',
+                                font: {
+                                    size: 18
+                                }
+                            }
+                        },
+                        y: {
+                            type: 'linear',
+                            position: 'left',
+                            title: {
+                                display: true,
+                                text: YAxistitle,
+                                font: {
+                                    size: 18
+                                }
+                            }
+                        }
+                    },
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
+                    },
+                    elements: {
+                        line: {
+                            tension: 0.4
+                        }
+                    }
+                }
+            });
+        }
+
+        function extractTableValues(tableId, type) {
+            const table = document.getElementById(tableId);
+            const rows = table.getElementsByTagName('tr');
+            const labels = [];
+            const data = [];
+
+            // Extract labels from the first row, starting from index 0
+            const cells = rows[0].getElementsByTagName('td');
+            for (let j = 1; j < cells.length; j++) {
+                labels.push(cells[j].textContent);
+            }
+
+            for (let i = 1; i < rows.length; i++) {
+                const cells = rows[i].getElementsByTagName('td');
+                const rowData = [];
+
+                for (let j = 1; j < cells.length; j++) {
+                    rowData.push(cells[j].textContent);
+                }
+
+                if (cells[0].textContent.toLowerCase() === type.toLowerCase()) {
+                    data.push(...rowData);
+                }
+            }
+
+            return { labels, data };
+        }
+
+
+    </script>
+
+    <script>
+        var selectedRows = [];
+
+        // Function to enable row selection after selecting the column
+        function selectColumn() {
+            var selectedColumn = parseInt(document.getElementById("columns").value);
+
+            // Enable the row selection
+            var checkboxes = document.getElementsByName("row");
+            for (var i = 0; i < checkboxes.length; i++) {
+                checkboxes[i].disabled = false;
+            }
+
+            // Clear selected rows array
+            selectedRows = [];
+        }
+
+        // Function to enable checkboxes when a variable is selected
+        function enableCheckboxes() {
+            const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+            checkboxes.forEach(checkbox => {
+                checkbox.disabled = false;
+            });
+        }
+        // Function to display selected rows in hidden tables
+        function displaySelectedRows() {
+            var checkboxes = document.getElementsByName("row");
+            var selectedColumn = parseInt(document.getElementById("columns").value);
+            var selectedTables = document.querySelectorAll("#tables table");
+
+            // Clear previously selected rows
+            selectedRows = [];
+            selectedTables.forEach(table => {
+                table.classList.add("hidden");
+                table.querySelector("caption").textContent = "";
+                // Remove all rows except the header row
+                while (table.rows.length > 1) {
+                    table.deleteRow(1);
+                }
+            });
+
+            // Get selected rows
+            for (var i = 0; i < checkboxes.length; i++) {
+                if (checkboxes[i].checked) {
+                    selectedRows.push(i);
+                }
+            }
+
+            // Display selected rows in hidden tables
+            const checkedCheckboxes = document.querySelectorAll('.test-checkbox:checked');
+            for (var i = 0; i < selectedRows.length && i < selectedTables.length; i++) {
+                for (var i = 0; i < checkedCheckboxes.length; i++) {
+                    var rowIndex = selectedRows[i] + 1;
+                    var table = selectedTables[i];
+                    var columnHeader = document.getElementById("listOfTest").rows[0].cells[selectedColumn].textContent;
+                    var cellData = document.getElementById("listOfTest").rows[rowIndex].cells[selectedColumn].textContent;
+                    const checkedCheckbox = checkedCheckboxes[i];
+                    var testId = checkedCheckbox.getAttribute('data-id');
+                    var caption = columnHeader + " : " + cellData + " : " + testId;
+                    table.querySelector("caption").textContent = caption;
+
+                    // Get the table body element
+                    const tableBody = table.querySelector("tbody");
+
+                    // Display the data from the selected row.
+                    fetchDataForTestId(testId)
+                        .then(data => {
+                            if (data.length === 0) {
+                                // Display a message in the table body when no results are found
+                                tableBody.innerHTML = '<tr><td colspan="10">No results found!</td></tr>';
+                                // Hide the "Compare Results" button when no results are found
+                            } else {
+                                const transposedData = transposeData(data);
+                                console.log('Fetched data for Table 1:', data);
+                                updateTableWithData(tableBody, transposedData); // Pass the table body element instead of table ID
+                            }
+                        });
+
+                    table.classList.remove("hidden");
+
+                }
+            }
+        }
+
+        // Function to update a table with fetched data
+        function updateTableWithData(tableBody, data) {
+            // Clear existing table body content
+            tableBody.innerHTML = '';
+            // Populate table body with new data
+            data.forEach(rowData => {
+                const newRow = document.createElement('tr');
+                for (const key in rowData) {
+                    const newCell = document.createElement('td');
+                    newCell.textContent = rowData[key];
+                    newRow.appendChild(newCell);
+                }
+                tableBody.appendChild(newRow);
+            });
+        }
+
+
+        // Function to fetch results for a specific test ID
+        function fetchDataForTestId(testId) {
+            return fetch(`/resultstable?testId=${testId}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Failed to fetch message from server');
+                    }
+                    return response.json();
+                })
+                .catch(error => {
+                    console.error('Error fetching message from server:', error);
+                    return null; // Return null in case of an error
+                });
+        }
+
+
+        // Fetch and populate the main table
+        document.addEventListener('DOMContentLoaded', () => {
+            fetch('/teststable')
+                .then(response => response.json())
+                .then(data => {
+                    const tableBody = document.getElementById('testTable');
+                    if (data.length === 0) {
+                        // Display "No tests found" row if no tests are found for the product 
+                        const noTestsRow = document.createElement('tr');
+                        noTestsRow.innerHTML = '<td colspan="11">No tests found!</td>'; // Adjust colspan to match the number of visible columns
+                        tableBody.appendChild(noTestsRow);
+                    } else {
+                        // Display table rows if data exists
+                        data.forEach(row => {
+                            const newRow = document.createElement('tr');
+                            newRow.innerHTML = `
+                            <td>${new Date(row.date_added).toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', year: 'numeric' })}</td>
+                            <td>${row.product}</td>
+                            <td>${row.device_id}</td>
+                            <td>${row.board_version}</td>
+                            <td>${row.firmware}</td>
+                            <td>${row.profile}</td>
+                            <td>${row.test_engineer}</td>
+                            <td>${row.power_source}</td>
+                            <td>${row.pump_type}</td>
+                            <td>${row.pump_id}</td>
+                            <td><input type="checkbox" data-id="${row.test_id}" name="row" class="test-checkbox" onchange="displaySelectedRows()"></td>
+                            `;
+                            tableBody.appendChild(newRow);
+                        });
+                        const checkboxes = document.querySelectorAll('.test-checkbox');
+                        let checkedCount = 0;
+
+                        checkboxes.forEach(checkbox => {
+                            checkbox.disabled = true; // Checkboxes are initially disabled
+                            checkbox.addEventListener('change', function () {
+                                const checkedCheckboxes = document.querySelectorAll('.test-checkbox:checked');
+                                // Disable checkboxes if maximum checked count reached
+                                checkboxes.forEach(checkbox => {
+                                    checkbox.disabled = checkedCheckboxes.length >= 3 && !checkbox.checked;
+                                });
+                            });
+                        });
+
+                        // Add event listener to the dropdown
+                        const dropdown = document.getElementById('columns'); // Replace 'your-dropdown-id' with the actual ID of your dropdown
+                        dropdown.addEventListener('change', function () {
+                            // Uncheck all the checked checkboxes
+                            checkboxes.forEach(checkbox => {
+                                checkbox.checked = false;
+
+                                clearTable('table1');
+                                clearTable('table2');
+                                clearTable('table3');
+                                clearChart();
+                            });
+                        });
+
+                    }
+                });
+        });
+        // Function to transpose data
+        function transposeData(data) {
+            // Get the keys (column names) of the first row
+            const keys = Object.keys(data[0]);
+            // Transpose the data
+            const transposedData = keys.map(key => [key].concat(data.map(row => row[key])));
+            return transposedData;
+        }
+
+        // Function to clear a table
+        function clearTable(tableId) {
+            const tableBody = document.getElementById(`${tableId}Body`);
+            tableBody.innerHTML = ''; // Clear the table body content
+            const table = document.getElementById(tableId);
+            const tableCaption = table.querySelector('caption');
+            if (tableCaption) {
+                tableCaption.textContent = ''; // Clear the caption content
+            }
+        }
+        // Function to clear the chart
+        function clearChart() {
+            if (window.comparisonChart) {
+                window.comparisonChart.destroy(); // Destroy the chart instance if it exists
+            }
+        }
+    </script>
+</body>
+
+</html>

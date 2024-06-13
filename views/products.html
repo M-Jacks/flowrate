@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>products</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css"
+    integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+  <link rel="stylesheet" href="/css/products.css">
+
+
+</head>
+
+<body>
+  <header>
+    <h2 class="logo">SunCulture R&D</h2>
+    <img src="/css/logo.jfif" style="background: transparent;" alt="logo" class="header-image">
+    <nav class="navigation">
+      <form action="/logout?_method=DELETE" method="POST">
+        <a href="/comparison">Analysis</a>
+        <a href="/reports">Reports</a>
+        <button class="btnLogin-popup" type="submit">Log Out</button>
+      </form>
+    </nav>
+    <button class="menu-toggle" aria-label="Open Menu">
+      &#9776;
+    </button>
+  </header>
+
+
+  <div class="centered-container">
+
+    <div class="paragraph-container">
+
+      <p>Access all the tests and results of pumps and SunCulture's products on the go. </p>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Products</th>
+          <th style="font-size: small;">Total tests found</th>
+        </tr>
+      </thead>
+      <tbody id="coreTableBody"></tbody>
+    </table>
+    <br>
+    <div class="container">
+      <button class="btn" id="addProductBtn">New Product?</button>
+      <div class="otherProducts">
+        <li><a id="toggleOtherProductsBtn">View other
+            products</a></li>
+      </div>
+      <br>
+      <ul id="otherProductsList" style="display: none;"></ul>
+    </div>
+
+  </div>
+
+  <!-- Modal for adding a new product -->
+  <div id="addProductModal" class="modal">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <h2>Add New Product</h2>
+      <form id="addProductForm">
+        <label for="productName">Product Name:</label>
+        <input type="text" id="productName" name="productName" required>
+        <label for="productType">Type:</label>
+        <select id="productType" name="productType" required>
+          <option value="Core">Core</option>
+          <option value="Other">Other</option>
+        </select>
+        <button class="btn" type="submit">Add</button>
+        <p id="modalMessage" class="error-message"></p> <!-- Element to display messages -->
+      </form>
+    </div>
+  </div>
+
+  <script>
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const coreTableBody = document.getElementById('coreTableBody');
+      const toggleOtherProductsBtn = document.getElementById('toggleOtherProductsBtn');
+      const otherProductsList = document.getElementById('otherProductsList');
+      let otherProductsVisible = false;
+
+      // Function to fetch data from the server
+      function fetchData(productType) {
+        return fetch(`/productstable?type=${productType}`)
+          .then(response => response.json())
+          .catch(error => console.error('Error fetching data:', error));
+      }
+
+      // Function to populate the table with fetched data
+      function populateTable(data, tableBody) {
+        tableBody.innerHTML = ''; // Clear existing table data
+        if (data.length === 0) {
+          const noProductsRow = document.createElement('tr');
+          noProductsRow.innerHTML = '<td>No products</td>';
+          tableBody.appendChild(noProductsRow);
+        } else {
+          data.forEach(row => {
+            const newRow = document.createElement('tr');
+            newRow.innerHTML = `
+                  <td>${row.product_name}</td>
+                  <td>-</td>
+                `;
+            newRow.addEventListener('click', () => {
+              window.location.href = `/tests?pId=${row.product_id}`; // Navigate to tests page
+            });
+            tableBody.appendChild(newRow);
+          });
+        }
+      }
+
+      // Function to populate the list with fetched data
+      function populateList(data, list) {
+        list.innerHTML = ''; // Clear existing list items
+        if (data.length === 0) {
+          const noProductsItem = document.createElement('li');
+          noProductsItem.textContent = 'No products';
+          list.appendChild(noProductsItem);
+        } else {
+          data.forEach(product => {
+            const listItem = document.createElement('li');
+            listItem.textContent = product.product_name;
+            listItem.addEventListener('click', () => {
+              window.location.href = `/tests?pId=${product.product_id}`; // Navigate to tests page
+            });
+            list.appendChild(listItem);
+          });
+        }
+      }
+
+      // Initial populating of core products table
+      fetchData('Core')
+        .then(data => populateTable(data, coreTableBody));
+
+      // Event listener for toggling visibility of other products table and list
+      toggleOtherProductsBtn.addEventListener('click', () => {
+        if (otherProductsVisible) {
+          otherProductsList.style.display = 'none'; // Hide the list
+        } else {
+          fetchData('Other')
+            .then(data => {
+              populateList(data, otherProductsList); // Populate other products list
+            });
+          otherProductsList.style.display = 'block'; // Show the list
+        }
+        otherProductsVisible = !otherProductsVisible; // Toggle visibility flag
+      });
+    });
+
+
+    // responsinveness
+    document.addEventListener('DOMContentLoaded', function () {
+      const menuToggle = document.querySelector('.menu-toggle');
+      const navigation = document.querySelector('.navigation');
+
+      menuToggle.addEventListener('click', function () {
+        navigation.classList.toggle('active');
+      });
+    });
+
+
+
+
+
+
+
+    // Client-side route for adding a new product
+    document.getElementById('addProductBtn').addEventListener('click', () => {
+      // Display the modal for adding a new product
+      document.getElementById('addProductModal').style.display = 'block';
+    });
+
+    // Close the modal when the user clicks on the close button
+    document.querySelector('.close').addEventListener('click', () => {
+      document.getElementById('addProductModal').style.display = 'none';
+      document.getElementById('modalMessage').innerText = ''; // Clear any existing messages
+    });
+
+    // Close the modal when the user clicks outside of it
+    window.onclick = function (event) {
+      if (event.target == document.getElementById('addProductModal')) {
+        document.getElementById('addProductModal').style.display = 'none';
+        document.getElementById('modalMessage').innerText = ''; // Clear any existing messages
+      }
+    }
+
+    // Submit form data when the user adds a new product
+    // Submit form data when the user adds a new product
+    document.getElementById('addProductForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      // Retrieve the product name and type from the form
+      const productName = document.getElementById('productName').value;
+      const productType = document.getElementById('productType').value;
+
+      try {
+        // Send a POST request to the server to add the new product
+        const response = await fetch('/products/add', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ productName, productType })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          // Close the modal and display a success message
+          document.getElementById('addProductModal').style.display = 'none';
+
+          // Append the newly added product to the table or list without reloading the page
+          const newRow = document.createElement('tr');
+          newRow.innerHTML = `
+              <td>${productName}</td>
+              <td>-</td>
+            `;
+          newRow.addEventListener('click', () => {
+            window.location.href = `/tests?pId=${data.productId}`; // Navigate to tests page
+          });
+
+          // Check if it's core or other products and append accordingly
+          if (productType === 'Core') {
+            coreTableBody.appendChild(newRow);
+          } else {
+            otherProductsList.appendChild(newRow);
+          }
+        } else {
+          // Display the error message inside the modal content section
+          document.getElementById('modalMessage').innerText = data.message;
+        }
+      } catch (error) {
+        console.error('Error adding product:', error);
+        document.getElementById('modalMessage').innerText = 'An error occurred. Please try again later.';
+      }
+    });
+
+
+  </script>
+
+
+</body>
+
+</html>

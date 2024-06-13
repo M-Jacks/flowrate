@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FlowInsight: Test Reports</title>
+    <!-- Quill CSS -->
+    <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f0f0f0;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .container {
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            max-width: 1000px;
+            width: 100%;
+            margin: 20px;
+            display: flex;
+            flex-direction: column;
+            height: 99vh;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        label {
+            font-weight: bold;
+            color: #555;
+        }
+
+        input {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        #description {
+            height: 150px;
+        }
+
+        button {
+            padding: 10px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #218838;
+        }
+
+        .reports-container {
+            overflow-y: auto;
+            flex-grow: 1;
+        }
+
+        .report {
+            background: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 10px 0;
+            position: relative;
+        }
+
+        .new-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #ff6347;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+        }
+
+        .read-more {
+            color: #007bff;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+
+        .full-report {
+            display: none;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 10px;
+                height: 100vh;
+            }
+
+            input {
+                font-size: 14px;
+            }
+
+            button {
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="back-icon" onclick="history.go(-1)">
+            &#8592;
+        </div>
+        <h1>Test Reports</h1>
+        <div class="reports-container" id="reports"></div>
+        <div class="reports">
+            <form id="reportForm">
+                <label for="title">Title</label>
+                <input type="text" id="title" name="title" required>
+                <label for="description">Description</label>
+                <div id="description"></div>
+                <button type="submit">Publish</button>
+            </form>
+        </div>
+    </div>
+    <!-- Quill JS -->
+    <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const quill = new Quill('#description', {
+                theme: 'snow',
+                modules: {
+                    toolbar: [
+                        [{ 'header': [1, 2, false] }],
+                        ['bold', 'italic', 'underline'],
+                        ['link', 'blockquote', 'code-block'],
+                        [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+                        [{ 'script': 'sub' }, { 'script': 'super' }],
+                        [{ 'indent': '-1' }, { 'indent': '+1' }],
+                        [{ 'direction': 'rtl' }],
+                        [{ 'color': [] }, { 'background': [] }],
+                        [{ 'align': [] }],
+                        ['clean']
+                    ]
+                }
+            });
+
+            loadReports();
+
+            document.getElementById('reportForm').addEventListener('submit', function (event) {
+                event.preventDefault();
+                const title = document.getElementById('title').value;
+                const description = quill.root.innerHTML;
+                const date = new Date().toISOString();
+                const report = { title, description, date };
+                saveReport(report);
+                this.reset();
+                quill.root.innerHTML = '';
+            });
+
+            async function saveReport(report) {
+                try {
+                    const response = await fetch('/reports', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(report)
+                    });
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    const newReport = await response.json();
+                    addReportToDOM(newReport);
+                } catch (error) {
+                    console.error('Error saving report:', error);
+                }
+            }
+
+            async function loadReports() {
+                try {
+                    const response = await fetch('/getreports');
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    const reports = await response.json();
+                    reports.forEach(report => addReportToDOM(report));
+                } catch (error) {
+                    console.error('Error loading reports:', error);
+                }
+            }
+
+            function addReportToDOM(report) {
+                const reportsDiv = document.getElementById('reports');
+                const reportEl = document.createElement('div');
+                reportEl.classList.add('report');
+
+                const now = new Date();
+                const reportDate = new Date(report.date);
+                const twoWeeksInMs = 14 * 24 * 60 * 60 * 1000;
+                if (now - reportDate < twoWeeksInMs) {
+                    const badge = document.createElement('div');
+                    badge.classList.add('new-badge');
+                    badge.textContent = 'New';
+                    reportEl.appendChild(badge);
+                }
+
+                const titleEl = document.createElement('h2');
+                titleEl.textContent = report.title;
+
+                const descEl = document.createElement('p');
+                descEl.classList.add('preview');
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = report.description;
+                descEl.innerHTML = tempDiv.textContent.split('\n').slice(0, 2).join('\n') + '...';
+
+                const fullDescEl = document.createElement('div');
+                fullDescEl.classList.add('full-report');
+                fullDescEl.innerHTML = report.description;
+
+                const dateEl = document.createElement('p');
+                dateEl.textContent = `Date: ${reportDate.toDateString()}`;
+                dateEl.style.color = '#777';
+
+                const readMoreEl = document.createElement('span');
+                readMoreEl.classList.add('read-more');
+                readMoreEl.textContent = 'Read more';
+                readMoreEl.addEventListener('click', () => {
+                    if (fullDescEl.style.display === 'none' || fullDescEl.style.display === '') {
+                        fullDescEl.style.display = 'block';
+                        descEl.style.display = 'none';
+                        readMoreEl.textContent = 'Show less';
+                    } else {
+                        fullDescEl.style.display = 'none';
+                        descEl.style.display = 'block';
+                        readMoreEl.textContent = 'Read more';
+                    }
+                });
+
+                reportEl.appendChild(titleEl);
+                reportEl.appendChild(descEl);
+                reportEl.appendChild(fullDescEl);
+                reportEl.appendChild(readMoreEl);
+                reportEl.appendChild(dateEl);
+
+                reportsDiv.appendChild(reportEl);
+            }
+        });
+    </script>
+</body>
+
+</html>

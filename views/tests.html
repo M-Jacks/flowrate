@@ -1,0 +1,524 @@
+<!-- see_tests.html -->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FlowInsight: Tests</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css"
+        integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <link rel="stylesheet" href="/css/tests.css">
+
+
+</head>
+<body>
+    <header>
+        <h2 class="logo">SunCulture R&D</h2>
+        <img src="/css/logo.jfif" style="background: transparent;" alt="logo" class="header-image">
+        <nav class="navigation">
+          <form action="/logout?_method=DELETE" method="POST">
+            <a href="/products">Products</a>
+            <a href="/comparison">Analysis</a>
+            <a href="/reports">Reports</a>
+            <button class="btnLogin-popup" type="submit">Log Out</button>
+          </form>
+        </nav>
+        <button class="menu-toggle" aria-label="Open Menu">
+          &#9776;
+        </button>
+      </header>
+    <div class="centered-container">
+        <div class="container">
+            <h3 class="text-center mt-3 mb-3" id="productIdDisplay"></h3>
+            <div class="row justify-content-between align-items-center" style="width:100%">
+                <div class="col-auto">
+                    <div class="back-icon" onclick="history.go(-1)">
+                        &#8592;
+                    </div>
+                </div>
+                <div class="col">
+                    <input type="text" id="searchInput" class="form-control"
+                        placeholder="Search for test by any Keyword">
+                </div>
+                <div class="col-auto">
+                    <button onclick="displayId(false)" class="btn btn-primary" id="addTestBtn" data-toggle="modal"
+                        data-target="#addTestModal">Add Test</button>
+                </div>
+            </div>
+            <br>
+        </div>
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Date Added</th>
+                        <th>Device Id</th>
+                        <th>Hardware Version</th>
+                        <th>Firmware Version</th>
+                        <th>Profile</th>
+                        <th>Test Engineer</th>
+                        <th>Power Source</th>
+                        <th>Pump Type</th>
+                        <th>Pump Serial No.</th>
+                    </tr>
+                </thead>
+                <tbody id="testTable">
+                    <!-- Table body rows will be populated dynamically -->
+                </tbody>
+            </table>
+        </div>
+        <!-- Modal 1 -->
+        <div class="modal fade" id="addTestModal" tabindex="-1" role="dialog" aria-labelledby="addTestModalLabel"
+            aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <form>
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <!--<h5 class="custom-label" id="addTestModalLabel">Add Test to </h5>-->
+                            <h5 class="text-center mt-3 mb-3" id="productIdDisplay2"></h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+
+                            <div class="form-group">
+                                <!-- <label class="custom-label" for="DeviceIdInput">Device Id:</label>-->
+                                <input type="text" placeholder="DeviceId(IMEI)" class="form-control" id="DeviceIdInput"
+                                    required>
+                            </div>
+                            <div class="form-group">
+                                <!-- <label class="custom-label" for="boardVersionInput">Board Version:</label>-->
+                                <input type="text" placeholder="H/W Version" class="form-control" id="boardVersionInput"
+                                    required>
+                            </div>
+                            <div class="form-group">
+                                <!--<label class="custom-label" for="firmwareInput">Firmware:</label>-->
+                                <input type="text" placeholder="F/W Version" class="form-control" id="firmwareInput"
+                                    required>
+                            </div>
+                            <div class="form-group">
+                                <!-- <label class="custom-label" for="profileInput">Profile:</label>-->
+                                <input type="text" placeholder="Pump Profile" class="form-control" id="profileInput"
+                                    required>
+                            </div>
+                            <div class="form-group">
+                                <!--<label class="custom-label" for="testEngineerInput">Test Engineer:</label>-->
+                                <input type="text" placeholder="Test Engineer" class="form-control"
+                                    id="testEngineerInput" required>
+                            </div>
+                            <div class="form-group">
+                                <!--<label class="custom-label" for="powersoureInput">Pump Type:</label>-->
+                                <input type="text" placeholder="Power Source" class="form-control" id="powersoureInput"
+                                    required>
+                            </div>
+                            <div class="form-group">
+                                <!--<label class="custom-label" for="pumpTypeInput">Pump Type:</label>-->
+                                <input type="text" placeholder="Pump Type" class="form-control" id="pumpTypeInput"
+                                    required>
+                            </div>
+                            <div class="form-group">
+                                <!-- <label class="custom-label" for="PumpIdInput">Device Id:</label>-->
+                                <input type="text" placeholder="Pump Serial No." class="form-control" id="PumpIdInput"
+                                    required>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-primary" id="confirmAddTestBtn">Confirm Add
+                                Test</button>
+                            <button type="button" class="btn btn-primary" id="saveEditTestBtn">Save Updated
+                                test</button>
+                        </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    </div>
+
+
+    <!--Editing and deleting-->
+    <script>
+        document.querySelector('table tbody').addEventListener('click', function (event) {
+            if (event.target.className === "delete-row-btn") {
+                deleteRowById(event.target.dataset.id);
+            }
+            if (event.target.className === "edit-row-btn") {
+                handleEditRow(event.target.dataset.id);
+            }
+        });
+    </script>
+    <script>
+
+        function getParameterByName(name, url) {
+            if (!url) url = window.location.href;
+            name = name.replace(/[\[\]]/g, '\\$&');
+            const regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)'),
+                results = regex.exec(url);
+            if (!results) return null;
+            if (!results[2]) return '';
+            return decodeURIComponent(results[2].replace(/\+/g, ' '));
+        }
+        function displayId(testId, editMode) {
+            var product_id = getParameterByName('pId');
+            var product = getParameterByName('pId');
+
+            // Change the button text and behavior based on the mode
+            if (editMode && product_id) {
+                document.getElementById('productIdDisplay2').textContent = `Edit test for ${product_id}.`;
+                document.getElementById('addTestBtn').innerText = 'Edit Test';
+                document.getElementById('confirmAddTestBtn').style.display = 'none';
+                document.getElementById('saveEditTestBtn').style.display = 'inline-block';
+                console.log(product_id);
+                // Fetch data for editing using the provided testId
+                fetchTestById(testId);
+            } else {
+                if (product_id) {
+                    document.getElementById('productIdDisplay2').textContent = `Add Test to ${product_id}.`;
+                    document.getElementById('addTestBtn').innerText = 'Add Test';
+                    document.getElementById('confirmAddTestBtn').style.display = 'inline-block';
+                    document.getElementById('saveEditTestBtn').style.display = 'none';
+                    console.log(product_id);
+                    // Clear modal fields
+                    clearModalFields();
+                }
+            }
+            // Show the modal
+            $('#addTestModal').modal('show');
+
+            // Pass the testId to the updateTestData function when clicking the save button
+            document.getElementById('saveEditTestBtn').addEventListener('click', function () {
+                // Get the updated test data from the modal fields
+                const updatedData = {
+                    DeviceIMEI: document.getElementById('DeviceIdInput').value,
+                    boardVersion: document.getElementById('boardVersionInput').value,
+                    firmware: document.getElementById('firmwareInput').value,
+                    profile: document.getElementById('profileInput').value,
+                    testEngineer: document.getElementById('testEngineerInput').value,
+                    powerSource: document.getElementById('powersoureInput').value,
+                    pumpType: document.getElementById('pumpTypeInput').value,
+                    pumpSerial: document.getElementById('PumpIdInput').value
+                };
+                // Call the updateTestData function with the testId and updatedData
+                updateTestData(testId, updatedData);
+            });
+        }
+
+
+
+        // search for test data by test ID
+        function fetchTestById(testId) {
+            fetch(`/testsbyId?testId=${testId}`) // Include the test ID as a query parameter
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Fetched test data:', data);
+                    // Populate modal fields with fetched data
+                    document.getElementById('DeviceIdInput').value = data.device_id;
+                    document.getElementById('boardVersionInput').value = data.board_version;
+                    document.getElementById('firmwareInput').value = data.firmware;
+                    document.getElementById('profileInput').value = data.profile;
+                    document.getElementById('testEngineerInput').value = data.test_engineer;
+                    document.getElementById('powersoureInput').value = data.power_source;
+                    document.getElementById('pumpTypeInput').value = data.pump_type;
+                    document.getElementById('PumpIdInput').value = data.pump_id;
+                    // Populate other fields similarly
+                })
+                .catch(error => {
+                    console.error('Error fetching test data:', error);
+                    // Handle errors, show error message, etc.
+                });
+        }
+
+
+        // Function to clear modal fields
+        function clearModalFields() {
+            // Clear modal fields
+            document.getElementById('DeviceIdInput').value = '';
+            document.getElementById('boardVersionInput').value = '';
+            // Clear other fields similarly
+        }
+
+        // Add event listener to the "Confirm Add Test" button
+        document.getElementById('confirmAddTestBtn').addEventListener('click', function () {
+            var productType = getParameterByName('pId'); // Use 'productType' instead
+
+            // Retrieve the values from the input fields
+            var deviceId = document.getElementById('DeviceIdInput').value;
+            var boardVersion = document.getElementById('boardVersionInput').value;
+            var firmware = document.getElementById('firmwareInput').value;
+            var profile = document.getElementById('profileInput').value;
+            var testEngineer = document.getElementById('testEngineerInput').value;
+            var powerSource = document.getElementById('powersoureInput').value;
+            var pumpType = document.getElementById('pumpTypeInput').value;
+            var pumpserial = document.getElementById('PumpIdInput').value;
+            // var Result = document.getElementById('ResultInput').value;
+
+            // Create an object to hold the data
+            var testData = {
+                productType: productType,
+                DeviceIMEI: deviceId,
+                boardVersion: boardVersion,
+                firmware: firmware,
+                profile: profile,
+                testEngineer: testEngineer,
+                powerSource: powerSource,
+                pumpType: pumpType,
+                pumpserial: pumpserial,
+            };
+            fetch('/add-test-data', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(testData)
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.text();
+                })
+                .then(data => {
+                    console.log('Server response:', data)
+
+                    // Close the modal
+                    $('#addTestModal').modal('hide');
+
+                    // Reload the page
+                    window.location.reload();
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while saving data');
+                });
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const productId = urlParams.get('pId');
+            if (productId) {
+                document.getElementById('productIdDisplay').textContent = `${productId} FlowCurve Tests`;
+
+                console.log(productId);
+            }
+
+            fetch(`/teststable/${productId}`)
+                .then(response => response.json())
+                .then(data => {
+                    const tableBody = document.getElementById('testTable');
+                    if (data.length === 0) {
+                        // Display "No tests found" row if no tests are found for the product 
+                        const noTestsRow = document.createElement('tr');
+                        noTestsRow.innerHTML = '<td colspan="11">No tests found!</td>'; // Adjust colspan to match the number of visible columns
+                        tableBody.appendChild(noTestsRow);
+                    } else {
+                        // Display table rows if data exists
+                        data.forEach(row => {
+                            const newRow = document.createElement('tr');
+                            newRow.innerHTML = `
+                                <td>${new Date(row.date_added).toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', year: 'numeric' })}</td>
+                                    <td>${row.device_id}</td>
+                                    <td>${row.board_version}</td>
+                                    <td>${row.firmware}</td>
+                                    <td>${row.profile}</td>
+                                    <td>${row.test_engineer}</td>
+                                    <td>${row.power_source}</td>
+                                    <td>${row.pump_type}</td>
+                                    <td>${row.pump_id}
+                                    </td>
+                                    <span class="hidden-icons">
+                                        <span onclick="editProduct(${row.test_id}, event)">&#128393;</span>
+                                        <span onclick="deleteProduct(${row.test_id}, event)">🗑️</span>
+                                        <span onclick="exportProduct(event)">&ctdot;</span>
+                                    </span> 
+                         `;
+                            newRow.style.cursor = 'pointer'; // Making the row clickable ✏️
+                            newRow.onclick = () => {
+                                const url = `/results?testId=${row.test_id}&prodId=${row.product}`;
+                                window.location.href = url; // Open URL in the same tab
+                            };
+                            tableBody.appendChild(newRow);
+                            // Assign the testId value from the current row
+                            //  testId = row.test_id;
+                        });
+                    }
+                })
+                .catch(error => console.error('Error fetching test data:', error));
+        });
+
+        function updateTestData(testId, updatedData) {
+            fetch(`/update-test-data?testId=${testId}`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(updatedData)
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Failed to update test data');
+                    }
+                    return response.text();
+                })
+                .then(data => {
+                    // Handle successful response
+                    console.log('Test data updated successfully:', data);
+
+                    // Close the modal
+                    $('#addTestModal').modal('hide');
+
+                    // Reload the page
+                    window.location.reload();
+                })
+                .catch(error => {
+                    // Handle error
+                    console.error('Error updating test data:', error);
+                    // Optionally, display an error message to the user
+                });
+        }
+
+
+
+    </script>
+
+    <!--Delete script-->
+    <script type="text/javascript">
+        // Function to handle delete operation
+        function deleteProduct(testId, event) {
+            event.stopPropagation(); // Prevent event bubbling
+
+            // Confirm deletion with user (optional)
+            const confirmDelete = confirm("Delete this test and its results?");
+            if (!confirmDelete) {
+                return; // Exit if user cancels deletion
+            }
+
+            // Send DELETE request to server
+            fetch(`/delete-test-data?testId=${testId}`, {
+                method: 'DELETE'
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Failed to delete test data');
+                    }
+                    return response.text();
+                })
+                .then(data => {
+                    // Handle successful deletion
+                    console.log('Test data deleted successfully:', data);
+                    // Optionally, update UI or perform other actions
+                    // Refresh the page
+                    window.location.reload();
+                })
+                .catch(error => {
+                    // Handle error
+                    console.error('Error deleting test data:', error);
+                    // Optionally, display an error message to the user
+                });
+        }
+
+        // Function to handle edit icon click
+        function editProduct(testId, event) {
+            event.stopPropagation(); // Prevent row click event from firing
+            console.log(testId);
+            console.log(testId);
+            console.log(testId);
+            // Pass the testId to the displayId function
+            displayId(testId, true);
+            return testId; // Return the testId value after fetching and processing the data
+        }
+
+        // Function to handle export icon click
+        function exportProduct(event) {
+            event.stopPropagation(); // Prevent row click event from firing
+            alert('Export test action');
+        }
+    </script>
+
+    <script>
+        // Get the input element
+        const searchInput = document.getElementById('searchInput');
+        let messageRowCount = 0;
+
+        // Add event listener for input event
+        searchInput.addEventListener('input', function () {
+            // Get the search value and convert it to lowercase
+            const searchText = searchInput.value.toLowerCase();
+
+            // Get all table rows
+            const rows = document.querySelectorAll('#testTable tr');
+
+            // Variable to keep track of whether any rows were found
+            let rowsFound = false;
+
+            // Loop through all rows
+            rows.forEach(row => {
+                // Get the text content of each row and convert it to lowercase
+                const rowText = row.textContent.toLowerCase();
+
+                // Check if the row contains the search text
+                if (rowText.includes(searchText)) {
+                    // Show the row if it matches the search text
+                    row.style.display = '';
+                    rowsFound = true; // Set flag to true if row is found
+                } else {
+                    // Hide the row if it does not match the search text
+                    row.style.display = 'none';
+                }
+            })
+            // Display message if no rows were found
+            if (!rowsFound) {
+
+                // Create a new row
+                const noResultsRow = document.createElement('tr');
+
+                // Create a cell to span 11 columns
+                const noResultsCell = document.createElement('td');
+                noResultsCell.setAttribute('colspan', '10');
+                noResultsCell.textContent = 'Nothing matches your search.';
+
+                // Append the cell to the row
+                noResultsRow.appendChild(noResultsCell);
+
+                // Set an ID for the row to easily identify and remove it later
+                noResultsRow.setAttribute('id', 'noResultsRow');
+
+                // Append the row to the table
+                document.getElementById('testTable').appendChild(noResultsRow);
+                messageRowCount++;
+
+            } else {
+                // Remove all previous "No tests found" message created for every input character that didnt match
+                for (let j = 1; j < messageRowCount; j++) {
+                    const noResultsRow = document.getElementById('noResultsRow');
+                    if (noResultsRow) {
+                        noResultsRow.remove();
+                    }
+                }
+            }
+        });
+
+    </script>
+
+
+    <!-- jQuery and Bootstrap Bundle (includes Popper) -->
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"
+        integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN"
+        crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"
+        integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q"
+        crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"
+        integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
+        crossorigin="anonymous"></script>
+
+
+    <br><br><br>
+</body>
+
+</html>

@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FlowInsight: Results</title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css"
+        integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <link rel="stylesheet" href="/css/results.css">
+
+    <style>
+        
+    </style>
+</head>
+
+<body>
+    <div class="centered-container">
+        <div id="tableContainer" style="display: none;">
+            <table id="my-table">
+                <tr>
+                    <th id="cell1">Head (m)</th>
+                </tr>
+                <tr>
+                    <td>Voltage (V)</td>
+                </tr>
+                <tr>
+                    <td>Current (A)</td>
+                </tr>
+                <tr>
+                    <td>T1 (S)</td>
+                </tr>
+                <tr>
+                    <td>T2 (S)</td>
+                </tr>
+                <tr>
+                    <td>Time (s)</td>
+                </tr>
+                <tr>
+                    <td>Power (W)</td>
+                </tr>
+                <tr>
+                    <td>Flowrate (L/H)</td>
+                </tr>
+                <tr>
+                    <td>Efficiency (%)</td>
+                </tr>
+            </table>
+            <div class="button-container" style="text-align: center;">
+
+                <span onclick="hideresultsInput ()" class="btn has-tooltip " data-tooltip="Close">&times;</span>
+                <button onclick="addColumn()" class="btn btn-primary has-tooltip"
+                    data-tooltip="Add Column">&plus;</button>
+                <button onclick="removeLastColumn()" class="btn btn-danger has-tooltip"
+                    data-tooltip="Delete last column">&minus;</button>
+                <button onclick="confirmSave()" class="btn btn-success" id="SaveResultsBtn">Save Results</button>
+
+            </div>
+        </div>
+
+
+        <div class="container">
+            <h2>Record results <button onclick="displayAddResultTable()" class="btn btn-primary">Add Result</button>
+            </h2>
+            <div class="row justify-content-between align-items-center">
+                <div class="col-auto">
+                    <div class="back-icon" onclick="history.go(-1)">
+                        &#8592;
+                    </div>
+                </div>
+                <div class="col">
+                    <h3 class="text-center mt-3 mb-3" id="productIdDisplay"></h3>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table" id="resultTable">
+                    <thead id="resultTableHead">
+                        <!-- Table header will be populated dynamically -->
+                    </thead>
+                    <tbody id="resultTableBody">
+                        <!-- Table body will be populated dynamically -->
+                    </tbody>
+                </table>
+                <canvas id="FlowCurveGraph"></canvas>
+                <br>
+                <a href="/comparison" id="compareButton"
+                    style="font-size: 24px; color: #007bff; text-decoration: none;">Go
+                    to comparison</a><br>
+            </div>
+        </div>
+
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+
+        <script>
+            function confirmSave() {
+                // Ask for confirmation
+                var confirmSave = confirm("Are you sure you want to save results?");
+
+                //   If the user confirms
+                if (confirmSave) {
+                    saveresultstable(); // Call the saveToDatabase function
+                } else {
+                    // If the user chooses not to save, you can add any additional logic here
+                }
+            }
+        </script>
+
+        <!-- prepare and save results -->
+        <script>
+
+
+            // url parameter extraction magic
+            function getParameterByName(name, url) {
+                if (!url) url = window.location.href;
+                name = name.replace(/[\[\]]/g, '\\$&');
+                const regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)'),
+                    results = regex.exec(url);
+                if (!results) return null;
+                if (!results[2]) return '';
+                return decodeURIComponent(results[2].replace(/\+/g, ' '));
+            }
+
+
+            function extractTableValues() {
+                const table = document.getElementById("my-table");
+                const rows = table.rows;
+                const jsonData = []; // Initialize an array to store JSON objects representing columns
+
+                // Get the number of columns in the table
+                const colCount = rows[0].cells.length;
+
+                // Get the value of the testId parameter from the URL
+                const testId = getParameterByName('testId');
+
+                // Loop through each column
+                for (let j = 1; j < colCount; j++) {
+                    const columnData = []; // Initialize an array to store cell values for the current column
+
+                    // Loop through each row
+                    for (let i = 0; i < rows.length; i++) {
+                        const cell = rows[i].cells[j];
+                        // Check if the cell contains an input element
+                        if (cell.children.length > 0 && cell.children[0].nodeName === 'INPUT') {
+                            // If yes, get the value of the input element and add it to the columnData array
+                            const value = cell.children[0].value.trim();
+                            columnData.push(value !== '' ? value : '0');
+                        } else {
+                            // If it doesn't contain an input element, 
+                            // If the cell value is empty or null, assign a default value of 0
+                            columnData.push(cell.textContent.trim() || '0');
+                        }
+                    }
+
+                    // Add testId fetched from URL params as the first element in the columnData array
+                    if (testId) {
+                        columnData.unshift(testId);
+                    }
+
+                    // Push the columnData array to the jsonData array as an object with a key representing the column index
+                    jsonData.push({ ["Column " + (j + 1)]: columnData });
+                }
+
+                // Print the number of columns in the table
+                console.log('Results table has:', colCount - 1, 'column(s)'); // Exclude the first column
+
+                // Return the JSON array representing the table data
+                return jsonData;
+            }
+
+
+            // Function to send data to server
+            function saveresultstable() {
+                const jsonData = extractTableValues();
+                console.log(jsonData);
+
+                fetch('/saveResults', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(jsonData)
+                })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        return response.text();
+                    })
+                    .then(data => {
+                        console.log('Server response:', data)
+                        location.reload();
+                        console.log('Data saved successfully');
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('An error occurred while saving data');
+                    });
+            }
+
+
+        </script>
+
+
+        <!-- Bootstrap JS -->
+        <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"
+            integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN"
+            crossorigin="anonymous"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"
+            integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q"
+            crossorigin="anonymous"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"
+            integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
+            crossorigin="anonymous"></script>
+
+        <!--handling of the add result modal-->
+        <script>
+
+            function displayAddResultTable() {
+
+                document.getElementById('tableContainer').style.display = 'block';
+                addColumn();
+            }
+
+            function hideresultsInput() {
+                document.getElementById('tableContainer').style.display = 'none';
+            }
+            // Function to add a column to the table
+            let col_count = 1; // Initialize column count
+            function addColumn() {
+                const table = document.getElementById("my-table");
+                const rowCount = table.rows.length;
+
+                // Define an array of placeholders for each row
+                const placeholders = ["Head", "Voltage", "Current", "T1", "T2", "Time", "Power", "Flowrate", "Efficiency"];
+
+                const newRowCell1 = table.rows[0].insertCell(table.rows[0].cells.length);
+                newRowCell1.innerHTML = `<input type="number" placeholder="${placeholders[0]}${col_count}" id="${placeholders[0]}${col_count}" >`;
+
+                // Create a new cell for the first row (except the header row)
+                const newRowCell2 = table.rows[1].insertCell(table.rows[1].cells.length);
+                newRowCell2.innerHTML = `<input type="number" placeholder="${placeholders[1]}${col_count}" id="${placeholders[1]}${col_count}" >`;
+
+                // Create a new cell for the second row
+                const newRowCell3 = table.rows[2].insertCell(table.rows[2].cells.length);
+                newRowCell3.innerHTML = `<input type="number" placeholder="${placeholders[2]}${col_count}" id="${placeholders[2]}${col_count}" >`;
+
+
+                const newRowCell4 = table.rows[3].insertCell(table.rows[3].cells.length);
+                newRowCell4.innerHTML = `<input type="number" placeholder="${placeholders[3]}${col_count}" id="${placeholders[3]}${col_count}" >`;
+
+                const newRowCell5 = table.rows[4].insertCell(table.rows[4].cells.length);
+                newRowCell5.innerHTML = `<input type="number" placeholder="${placeholders[4]}${col_count}" id="${placeholders[4]}${col_count}" >`;
+
+                const newRowCell6 = table.rows[5].insertCell(table.rows[5].cells.length);
+                const timeId = `Time${col_count}`;
+                newRowCell6.innerHTML = `<span id="${timeId}"></span>`;
+
+                const newRowCell7 = table.rows[6].insertCell(table.rows[6].cells.length);
+                const powerId = `Power${col_count}`;
+                newRowCell7.innerHTML = `<span id="${powerId}"></span>`;
+
+                // Create a new cell for the fourth row
+                const newRowCell8 = table.rows[7].insertCell(table.rows[7].cells.length);
+                const flowrateId = `Flowrate${col_count}`;
+                newRowCell8.innerHTML = `<span id="${flowrateId}"></span>`;
+
+                // Create a new cell for the fourth row
+                const newRowCell9 = table.rows[8].insertCell(table.rows[8].cells.length);
+                const efficiencyId = `Efficiency${col_count}`;
+                newRowCell9.innerHTML = `<span id="${efficiencyId}"></span>`;
+
+
+                // Call calculatePower() to update the Power cell when Voltage or Current is changed
+                const headId = `${placeholders[0]}${col_count}`;
+                const voltageId = `${placeholders[1]}${col_count}`;
+                const currentId = `${placeholders[2]}${col_count}`;
+                const take1Id = `${placeholders[3]}${col_count}`;
+                const take2Id = `${placeholders[4]}${col_count}`;
+                document.getElementById(voltageId).addEventListener("input", function () { calculatePower(voltageId, currentId, powerId); });
+                document.getElementById(currentId).addEventListener("input", function () { calculatePower(voltageId, currentId, powerId); });
+
+                document.getElementById(take1Id).addEventListener("input", function () { calculateTime(take1Id, take2Id, timeId); });
+                document.getElementById(take2Id).addEventListener("input", function () { calculateTime(take1Id, take2Id, timeId); });
+
+                document.getElementById(take1Id).addEventListener("input", function () { calculateFlowrate(take1Id, take2Id, timeId, flowrateId); });
+                document.getElementById(take2Id).addEventListener("input", function () { calculateFlowrate(take1Id, take2Id, timeId, flowrateId); });
+
+                document.getElementById(headId).addEventListener("input", function () { calculateEfficiency(headId, take1Id, take2Id, powerId, efficiencyId, flowrateId); });
+                document.getElementById(take1Id).addEventListener("input", function () { calculateEfficiency(headId, take1Id, take2Id, powerId, efficiencyId, flowrateId); });
+                document.getElementById(take2Id).addEventListener("input", function () { calculateEfficiency(headId, take1Id, take2Id, powerId, efficiencyId, flowrateId); });
+                document.getElementById(voltageId).addEventListener("input", function () { calculateEfficiency(headId, take1Id, take2Id, powerId, efficiencyId, flowrateId); });
+                document.getElementById(currentId).addEventListener("input", function () { calculateEfficiency(headId, take1Id, take2Id, powerId, efficiencyId, flowrateId); });
+                col_count++;
+            }
+            function calculatePower(VoltageId, CurrentId, powerId) {
+                // Get the values of the two input fields
+                var Voltage = parseFloat(document.getElementById(VoltageId).value);
+                var Current = parseFloat(document.getElementById(CurrentId).value);
+
+                // Check if both inputs are numbers
+                if (!isNaN(Voltage) && !isNaN(Current)) {
+                    // Calculate the product
+                    var product = Voltage * Current;
+                    product = product.toFixed(2);
+                    // Display the result
+                    document.getElementById(powerId).textContent = product;
+                } else {
+                    // Display an error message if inputs are not numbers
+                    // document.getElementById(PowerId).textContent = " enter valid numbers.";
+                }
+            }
+            function calculateTime(T1Id, T2Id, timeId) {
+                // Get the values of the two input fields
+                var take1 = parseFloat(document.getElementById(T1Id).value);
+                var take2 = parseFloat(document.getElementById(T2Id).value);
+
+                // Check if both inputs are numbers
+                if (!isNaN(take1) && !isNaN(take2)) {
+                    // Calculate the average
+                    var average = (take1 + take2) / 2;
+                    // Limit to two decimal places
+                    average = average.toFixed(2);
+                    // Display the result
+                    document.getElementById(timeId).textContent = average;
+                } else {
+                    // Display an error message if inputs are not numbers
+                    // document.getElementById(TimeId).textContent = "enter valid numbers.";
+                }
+            }
+
+            function calculateFlowrate(T1Id, T2Id, timeId, flowrateId) {
+                // Get the values of the two input fields
+                var take1 = parseFloat(document.getElementById(T1Id).value);
+                var take2 = parseFloat(document.getElementById(T2Id).value);
+                var timeCell = document.getElementById(timeId);
+
+                // Extract time value from the time cell
+                var time = parseFloat(timeCell.textContent);
+
+                // Check if all inputs are numbers
+                if (!isNaN(take1) && !isNaN(take2) && !isNaN(time) && time !== 0) {
+                    // Calculate the flowrate
+                    var flowrate = (3600 * 20) / time; // Assuming '3600 * 20' is your formula/
+                    // Round the flowrate to 2 decimal points
+                    flowrate = flowrate.toFixed(2);
+                    // Display the result
+                    document.getElementById(flowrateId).textContent = flowrate;
+                } else {
+                    // Display an error message if inputs are not numbers or time is 0
+                    // document.getElementById(flowrateId).textContent = "Enter valid numbers for time.";
+                    // document.getElementById(flowrateId).textContent = "";
+                }
+            }
+
+            function calculateEfficiency(HeadId, T1Id, T2Id, powerId, efficiencyId, flowrateId) {
+                // Get the values of the two input fields
+                var head = parseFloat(document.getElementById(HeadId).value);
+                var take1 = parseFloat(document.getElementById(T1Id).value);
+                var take2 = parseFloat(document.getElementById(T2Id).value);
+
+                var powerCell = document.getElementById(powerId);
+                var flowrateCell = document.getElementById(flowrateId);
+
+                // Extract power and flowrate values
+                var power = parseFloat(powerCell.textContent);
+                var flowrate = parseFloat(flowrateCell.textContent);
+
+                console.log("Head:", head);
+                console.log("Power:", power);
+                console.log("Flowrate:", flowrate);
+
+                // Check if both inputs are numbers
+                if (!isNaN(take1) && !isNaN(take2) && !isNaN(head) && !isNaN(power) && !isNaN(flowrate) && power !== 0) {
+                    // Calculate the efficiency
+                    var efficiency = (head * flowrate) * 100 / (367 * power);
+                    // Round the efficiency to 2 decimal points
+                    efficiency = efficiency.toFixed(2);
+                    // Display the result
+                    document.getElementById(efficiencyId).textContent = efficiency;
+                } else {
+                    // Display an error message if inputs are not numbers or if power is 0
+                    // document.getElementById(efficiencyId).textContent = "NaN";
+                }
+            }
+
+            function removeLastColumn() {
+                const table = document.getElementById("my-table");
+                const rowCount = table.rows.length;
+                // let col_count = table.rows[0].cells.length; // Initialize col_count with the initial number of columns
+
+                if (rowCount > 0) {
+                    for (let i = 0; i < rowCount; i++) {
+                        const lastCellIndex = table.rows[i].cells.length - 1;
+                        if (lastCellIndex >= 1) {
+                            table.rows[i].deleteCell(lastCellIndex);
+                        }
+                    }
+                    if (col_count > 1) {
+                        col_count--;
+                    }
+                }
+            }
+
+
+
+        </script>
+        <!-- JavaScript to fetch and populate data -->
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                const urlParams = new URLSearchParams(window.location.search);
+                const testId = urlParams.get('testId');
+                if (testId) {
+                    document.getElementById('productIdDisplay').textContent = `Test ${testId} results:`;
+                }
+
+                // Fetch and populate data
+                fetchResults();
+            });
+
+            function fetchResults() {
+                // Get the testId and prodId from the URL query string
+                const urlParams = new URLSearchParams(window.location.search);
+                const testId = urlParams.get('testId');
+                const prodId = urlParams.get('prodId');
+
+                // Fetch data from the server
+                fetch(`/resultstable/${testId}/${prodId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.length === 0) {
+                            // Display a message in the table body when no results are found
+                            const resultTableBody = document.getElementById('resultTableBody');
+                            resultTableBody.innerHTML = '<tr><td colspan="10">No results found for the test</td></tr>';
+                            // Hide the "Compare Results" button when no results are found
+                            document.getElementById('compareButton').style.display = 'none';
+                        } else {
+                            // Transpose the data
+                            const transposedData = transposeData(data);
+
+                            // Populate the table with transposed data
+                            const resultTableHead = document.getElementById('resultTableHead');
+                            const resultTableBody = document.getElementById('resultTableBody');
+                            transposedData.forEach((row, index) => {
+                                const tableRow = document.createElement('tr');
+                                row.forEach(cell => {
+                                    if (index === 0) {
+                                        // Create table header for the first row (column headers)
+                                        const tableHeader = document.createElement('th');
+                                        tableHeader.textContent = cell;
+                                        tableRow.appendChild(tableHeader);
+                                    } else {
+                                        // Create table data for other rows
+                                        const tableData = document.createElement('td');
+                                        tableData.textContent = cell;
+                                        tableRow.appendChild(tableData);
+                                    }
+                                });
+                                if (index === 0) {
+                                    // Append table header row
+                                    resultTableHead.appendChild(tableRow);
+                                } else {
+                                    // Append table body row
+                                    resultTableBody.appendChild(tableRow);
+                                }
+                            });
+                            // Show the "Compare Results" button
+                            document.getElementById('compareButton').style.display = 'block';
+
+                            // Extract values - for plotting graph - after populating the table
+                            const extractedData = extractValues();
+
+                            // Parse extracted values to separate 'Head' and 'Flow Rate' data
+                            const dataPoints = [];
+                            const headValues = extractedData[0]; // Assuming the first array contains 'Head' values
+                            const flowRateValues = extractedData[7]; // Assuming the ninth array contains 'Flow Rate' values
+
+                            // Iterate over the 'Head' and 'Flow Rate' arrays and create data points
+                            for (let i = 0; i < headValues.length; i++) {
+                                const head = headValues[i];
+                                const flowRate = flowRateValues[i];
+                                dataPoints.push({ x: head, y: flowRate });
+                            }
+
+                            // Create a graph using Chart.js
+                            createGraph(dataPoints);
+                        }
+                    })
+                    .catch(error => console.error('Error fetching data:', error));
+            }
+
+
+            // Function to create a graph using Chart.js
+            function createGraph(dataPoints) {
+                // Filter out 'NaN' values and ensure 'Head' values are numeric
+                var filteredDataPoints = dataPoints.filter(point => !isNaN(point.x) && !isNaN(point.y));
+
+                var ctx = document.getElementById('FlowCurveGraph').getContext('2d');
+                var FlowCurveGraph = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        datasets: [{
+                            label: 'Flow Rate vs. Head',
+                            data: filteredDataPoints,
+                            backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                            borderColor: 'rgba(54, 162, 235, 1)',
+                            borderWidth: 1,
+                            font: {
+                                size: 30 // Adjust the font size for the dataset label
+                            }
+                        }]
+                    },
+                    options: {
+                        scales: {
+                            x: {
+                                type: 'linear',
+                                position: 'bottom',
+                                scaleLabel: {
+                                    display: true,
+                                },
+                                title: {
+                                    display: true,
+                                    text: 'Head (m)',
+                                    font: {
+                                        size: 25
+                                    }
+                                }
+                            },
+                            y: {
+                                type: 'linear',
+                                position: 'left',
+                                scaleLabel: {
+                                    display: true,
+                                },
+                                title: {
+                                    display: true,
+                                    text: 'Flowrate (L/h)',
+                                    font: {
+                                        size: 25
+                                    }
+                                }
+                            }
+                        },
+                        // Set cubic interpolation mode for smoother curve
+                        plugins: {
+                            tooltip: {
+                                intersect: false
+                            }
+                        },
+                        interaction: {
+                            intersect: false,
+                            mode: 'index'
+                        },
+                        elements: {
+                            line: {
+                                tension: 0.4 // Adjust the tension for the curve
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Function to extract table values (excluding the first column) and convert strings to numbers
+            function extractValues() {
+                var table = document.getElementById("resultTable");
+                var rows = table.getElementsByTagName("tr");
+                var extractedValues = [];
+
+                // Extract header values
+                var headerRow = rows[0];
+                var headerCells = headerRow.getElementsByTagName("th");
+                var headerValues = [];
+
+                // Start from the second cell to skip the first column
+                for (var i = 1; i < headerCells.length; i++) {
+                    var headerCell = headerCells[i];
+                    headerValues.push(parseFloat(headerCell.innerText));
+                }
+
+                // Add header values to extractedValues
+                extractedValues.push(headerValues);
+
+                // Loop through each row of the table (excluding the header row)
+                for (var i = 1; i < rows.length; i++) {
+                    var row = rows[i];
+                    var cells = row.getElementsByTagName("td");
+                    var rowData = [];
+
+                    // Start from the second cell to skip the first column
+                    for (var j = 1; j < cells.length; j++) {
+                        var cell = cells[j];
+                        rowData.push(parseFloat(cell.innerText)); // Convert string to number
+                    }
+
+                    // Add row data to extractedValues
+                    extractedValues.push(rowData);
+                }
+
+                return extractedValues;
+
+            }
+            // Function to transpose data
+            function transposeData(data) {
+                // Get the keys (column names) of the first row
+                const keys = Object.keys(data[0]);
+                // Transpose the data
+                const transposedData = keys.map(key => [key].concat(data.map(row => row[key])));
+                return transposedData;
+            }
+
+
+
+        </script>
+        <script>
+            document.addEventListener('keydown', function(event) {
+                let inputs = Array.from(document.querySelectorAll('input[type="number"]'));
+                let currentIndex = inputs.indexOf(document.activeElement);
+    
+                if (currentIndex !== -1) {
+                    switch (event.key) {
+                        case 'ArrowUp':
+                            event.preventDefault();
+                            if (currentIndex - 5 >= 0) {
+                                inputs[currentIndex - 5].focus();
+                            }
+                            break;
+                        case 'ArrowDown':
+                            event.preventDefault();
+                            if (currentIndex + 5 < inputs.length) {
+                                inputs[currentIndex + 5].focus();
+                            }
+                            break;
+                        case 'ArrowLeft':
+                            if (currentIndex % 5 !== 0) {
+                                inputs[currentIndex - 1].focus();
+                            }
+                            break;
+                        case 'ArrowRight':
+                            if (currentIndex % 5 !== 4) {
+                                inputs[currentIndex + 1].focus();
+                            }
+                            break;
+                    }
+                }
+            });
+        </script>
+
+</body>
+
+</html>

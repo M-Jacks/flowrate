@@ -1,0 +1,230 @@
+
+body {
+    display: flex;
+    justify-content: top;
+    align-items: top;
+    min-height: 100vh;
+    margin: 0;
+    padding: 0;
+
+    background-color: azure;
+    background-position: center;
+    /* background-image: url("image3.jpg");*/
+    background-size: cover;
+    /* Scale the image to cover the entire element */
+    background-repeat: no-repeat;
+    /* Prevent image repetition */
+    background-attachment: fixed;
+    /* Keep the image fixed while scrolling */
+    font-family: Arial, sans-serif;
+}
+
+header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    padding: 45px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 99;
+    background: rgb(117, 232, 205);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  .logo {
+    font-size: 2em;
+    color: white;
+    user-select: none;
+  }
+  
+  .header-image {
+    height: 50px;
+    width: auto;
+  }
+  
+  .navigation a {
+    position: relative;
+    font-size: 1.1em;
+    color: white;
+    text-decoration: none;
+    font-weight: 500;
+    margin-left: 40px;
+  }
+  
+  .navigation a::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: -6px;
+    width: 100%;
+    height: 3px;
+    background: white;
+    border-radius: 5px;
+    transform-origin: right;
+    transform: scaleX(0);
+    transition: transform 0.5s;
+  }
+  
+  .navigation a:hover:after {
+    transform-origin: left;
+    transform: scaleX(1);
+  }
+  
+  .navigation .btnLogin-popup {
+    width: 130px;
+    height: 50px;
+    margin-right: 20px;
+    background: transparent;
+    border: 2px solid white;
+    outline: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1.1em;
+    color: white;
+    font-weight: 500;
+    margin-left: 40px;
+    transition: 0.5s;
+  }
+  
+  .navigation .btnLogin-popup:hover {
+    background: white;
+    color: grey;
+  }
+  
+  .menu-toggle {
+    display: none;
+    font-size: 24px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: white;
+  }
+  
+  /* Responsive styling */
+  @media (max-width: 768px) {
+    .header-image {
+      height: 40px;
+    }
+  
+    .navigation {
+      display: none;
+      flex-direction: column;
+      position: absolute;
+      top: 100px;
+      /* Adjusted to accommodate the header height */
+      right: 10px;
+      background: rgb(117, 232, 205);
+      border: 1px solid #ccc;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      padding: 10px;
+    }
+  
+    .navigation a,
+    .navigation button {
+      margin: 10px 0;
+    }
+  
+    .menu-toggle {
+      display: block;
+    }
+  
+    .navigation.active {
+      display: flex;
+    }
+  }
+
+.centered-container {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 20px;
+    background: transparent;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin-top: calc(80px + 40px + 10px);
+    /* Ensure the container expands to fit its contents */
+    display: flex;
+    flex-direction: column;
+}
+
+table {
+    border-collapse: collapse;
+    width: 10px;
+    margin: 10px auto;
+}
+
+th {
+    background-color: #7beb8c;
+}
+
+th,
+td {
+    border: 1px solid #dddddd;
+    text-align: left;
+    padding: 8px;
+}
+
+#searchInput:hover {
+    background-color: #afeecc;
+}
+
+table tr:hover {
+    background-color: #afeecc;
+}
+
+/* Style for the hidden icons */
+.hidden-icons {
+    display: none;
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    background-color: rgba(70, 169, 172, 0.468);
+    padding: 1px;
+    border: none;
+    /* No border */
+    z-index: 1;
+    transition: background-color 0.3s ease;
+    /* Smooth transition for background color */
+
+}
+
+.hidden-icons span {
+    font-size: 26px;
+}
+
+/* Show icons when row is hovered */
+tr:hover .hidden-icons {
+    display: inline-block;
+}
+
+/* more styling for the clickable rows */
+tbody tr {
+    cursor: pointer;
+    position: relative;
+}
+
+.btn-primary {
+    font-size: 24px;
+    padding: 10px 20px;
+    border-radius: 35px;
+    background-color: #7beb8c;
+    color: #000000;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.btn-primary:hover {
+    background-color: #72f9f6;
+    color: #000000;
+}
+
+.back-icon {
+    top: 20px;
+    left: 20px;
+    font-size: 40px;
+    color: #007bff;
+    cursor: pointer;
+}
