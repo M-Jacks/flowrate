@@ -235,7 +235,7 @@ app.post('/products/add', checkAuthenticated, async (req, res) => {
 
 
 // Home page route
-app.get('/',  (req, res) => {
+app.get('/testss', checkAuthenticated, (req, res) => {
   res.sendFile(__dirname + '/views/products.html');
 });
 
