@@ -48,7 +48,7 @@ app.use(methodOverride('_method'));
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Serve static HTML files
-// app.use(express.static(path.join(__dirname, 'views')));
+app.use(express.static(path.join(__dirname, 'views')));
 
 // Initialize Passport
 initializePassport(
@@ -235,7 +235,7 @@ app.post('/products/add', checkAuthenticated, async (req, res) => {
 
 
 // Home page route
-app.get('/', checkAuthenticated, (req, res) => {
+app.get('/',  (req, res) => {
   res.sendFile(__dirname + '/views/products.html');
 });
 
