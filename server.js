@@ -240,7 +240,7 @@ app.get('/testss', checkAuthenticated, (req, res) => {
 });
 
 // Login page route
-app.get('/login', checkNotAuthenticated, (req, res) => {
+app.get('/login',  (req, res) => {
   res.sendFile(__dirname + '/views/products.html');
 });
 
