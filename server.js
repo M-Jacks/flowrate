@@ -20,7 +20,11 @@ const pool = new Pool({
   database: process.env.POSTGRES_DATABASE,
   password: process.env.POSTGRES_PASSWORD,
   port: process.env.POSTGRES_PORT || 5432, // default PostgreSQL port
-});
+  ssl: {
+    rejectUnauthorized: false // This is necessary for self-signed certificates
+  },
+  connectionTimeoutMillis: 30000, // Increase timeout to 30 seconds
+}); 
 
 // Middleware
 app.use(express.json());
@@ -88,7 +92,7 @@ app.post('/signup', checkNotAuthenticated, async (req, res) => {
   // Hash the password
   const hashedPassword = await bcrypt.hash(password, 10);
 
-  const client = await pool.connect();
+  const client = await connectWithRetry();
   try {
     // Check if users table exists, create if it doesn't
     await client.query(`
@@ -121,47 +125,71 @@ app.post('/signup', checkNotAuthenticated, async (req, res) => {
 });
 
 
-// Login route
+async function connectWithRetry(retries = 5, delay = 2000) {
+  for (let i = 0; i < retries; i++) {
+    try {
+      const client = await pool.connect();
+      console.log('Database connection acquired');
+      return client;
+    } catch (error) {
+      console.error(`Database connection failed (attempt ${i + 1}): ${error.message}`);
+      if (i < retries - 1) {
+        console.log(`Retrying in ${delay / 1000} seconds...`);
+        await new Promise(res => setTimeout(res, delay));
+      } else {
+        throw error;
+      }
+    }
+  }
+}
+
 app.post('/login', checkNotAuthenticated, async (req, res, next) => {
-  const { email, password } = req.body;
+  console.log('Received login request');
 
-  const client = await pool.connect();
   try {
-    // Check if users table exists, create if it doesn't
-    await client.query(`
-      CREATE TABLE IF NOT EXISTS users (
-        id SERIAL PRIMARY KEY,
-        first_name VARCHAR(100),
-        last_name VARCHAR(100),
-        email VARCHAR(255),
-        password VARCHAR(255),
-        date DATE DEFAULT CURRENT_DATE
-      );
-    `);
+    const client = await connectWithRetry();
+    try {
+      // Check if users table exists, create if it doesn't
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS users (
+          id SERIAL PRIMARY KEY,
+          first_name VARCHAR(100),
+          last_name VARCHAR(100),
+          email VARCHAR(255),
+          password VARCHAR(255),
+          date DATE DEFAULT CURRENT_DATE
+        );
+      `);
+      console.log('Checked and ensured users table exists');
 
-    // Authenticate user
-    passport.authenticate('local', (err, user, info) => {
-      if (err) {
-        return res.status(500).json({ message: 'Internal Server Error' });
-      }
-      if (!user) {
-        return res.status(400).json({ message: info.message });
-      }
-      req.logIn(user, (err) => {
+      // Authenticate user
+      passport.authenticate('local', (err, user, info) => {
         if (err) {
-          return res.status(500).json({ message: 'Internal Server Error' });
+          console.error('Error during authentication', err);
+          return res.status(500).json({ message: 'Internal Server Error 1' });
         }
-        return res.status(200).json({ message: 'Login successful' });
-      });
-    })(req, res, next);
+        if (!user) {
+          console.log('Authentication failed: User not found');
+          return res.status(400).json({ message: info.message });
+        }
+        req.logIn(user, (err) => {
+          if (err) {
+            console.error('Error during login', err);
+            return res.status(500).json({ message: 'Internal Server Error 2' });
+          }
+          console.log('User logged in successfully');
+          return res.status(200).json({ message: 'Login successful' });
+        });
+      })(req, res, next);
+    } finally {
+      client.release();
+      console.log('Database connection released');
+    }
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Internal Server Error' });
-  } finally {
-    client.release();
+    console.error('Error during database operation', error);
+    res.status(500).json({ message: 'Internal Server Error 3' });
   }
 });
-
 
 // Logout route
 app.delete('/logout', (req, res) => {
@@ -235,13 +263,13 @@ app.post('/products/add', checkAuthenticated, async (req, res) => {
 
 
 // Home page route
-app.get('/testss', checkAuthenticated, (req, res) => {
+app.get('/', checkAuthenticated, (req, res) => {
   res.sendFile(__dirname + '/views/products.html');
 });
 
 // Login page route
-app.get('/login',  (req, res) => {
-  res.sendFile(__dirname + '/views/products.html');
+app.get('/login',  (req, res) => { 
+  res.sendFile(__dirname + '/views/index.html');
 });
 
 
