@@ -143,6 +143,7 @@ async function connectWithRetry(retries = 5, delay = 2000) {
   }
 }
 
+
 app.post('/login', checkNotAuthenticated, async (req, res, next) => {
   console.log('Received login request');
 
@@ -151,9 +152,9 @@ app.post('/login', checkNotAuthenticated, async (req, res, next) => {
     try {
       // Check if users table exists, create if it doesn't
       await client.query(`
-        CREATE TABLE IF NOT EXISTS users1 (
-          id SERIAL PRIMARY KEY,
-          first_name VARCHAR(100),
+        CREATE TABLE IF NOT EXISTS users (
+          id SERIAL PRIMARY KEY, 
+          first_name VARCHAR(100), 
           last_name VARCHAR(100),
           email VARCHAR(255),
           password VARCHAR(255),
@@ -166,7 +167,7 @@ app.post('/login', checkNotAuthenticated, async (req, res, next) => {
       passport.authenticate('local', (err, user, info) => {
         if (err) {
           console.error('Error during authentication', err);
-          return res.status(500).json({ message: 'Internal Server Error 1' });
+          return res.status(500).json({ message: 'Internal Server Error: Authentication' });
         }
         if (!user) {
           console.log('Authentication failed: User not found');
@@ -175,7 +176,7 @@ app.post('/login', checkNotAuthenticated, async (req, res, next) => {
         req.logIn(user, (err) => {
           if (err) {
             console.error('Error during login', err);
-            return res.status(500).json({ message: 'Internal Server Error 2' });
+            return res.status(500).json({ message: 'Internal Server Error: Login' });
           }
           console.log('User logged in successfully');
           return res.status(200).json({ message: 'Login successful' });
@@ -187,9 +188,10 @@ app.post('/login', checkNotAuthenticated, async (req, res, next) => {
     }
   } catch (error) {
     console.error('Error during database operation', error);
-    res.status(500).json({ message: 'Internal Server Error 3' });
+    res.status(500).json({ message: 'Internal Server Error: Database' });
   }
 });
+
 
 
 // Logout route
