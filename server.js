@@ -11,17 +11,22 @@ const methodOverride = require('method-override');
 const path = require('path');
 const initializePassport = require('./passport-config');
 
-const app = express(); 
+const app = express();
 
-// PostgreSQL connection configuration 
+// PostgreSQL connection configuration
 const pool = new Pool({
   connectionString: process.env.POSTGRES_URL,
   ssl: {
-    rejectUnauthorized: false // necessary for self-signed certificates 
+    rejectUnauthorized: false // necessary for self-signed certificates
   },
-  connectionTimeoutMillis: 30000, // Increase timeout to 30 seconds
+  connectionTimeoutMillis: 30000 // Increase timeout to 30 seconds
 });
 
+async function connect() {
+  const client = await pool.connect();
+  console.log('Connected to PostgreSQL database');
+  return client;
+}
 
 // Middleware
 app.use(express.json());
@@ -33,15 +38,17 @@ if (!process.env.SESSION_SECRET) {
 } else {
   console.log('SESSION_SECRET is defined!');
 }
-app.use(session({
-  secret: process.env.SESSION_SECRET,
-  resave: false,
-  saveUninitialized: false,
-  cookie: {
-    secure: process.env.NODE_ENV === 'production', // Secure cookies in production
-    maxAge: 60000 // Set cookie expiration (example: 1 minute)
-  }
-}));
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      secure: process.env.NODE_ENV === 'production', // Secure cookies in production
+      maxAge: 60000 // Set cookie expiration (example: 1 minute)
+    }
+  })
+);
 
 app.use(passport.initialize());
 app.use(passport.session());
@@ -55,16 +62,16 @@ app.use(express.static(path.join(__dirname, 'views')));
 initializePassport(
   passport,
   async (email) => {
-    const client = await pool.connect();
+    const client = await connect();
     try {
       const { rows } = await client.query('SELECT * FROM users WHERE email = $1', [email]);
       return rows[0];
     } finally {
-      client.release(); 
+      client.release();
     }
   },
   async (id) => {
-    const client = await pool.connect();
+    const client = await connect();
     try {
       const { rows } = await client.query('SELECT * FROM users WHERE id = $1', [id]);
       return rows[0];
@@ -74,14 +81,6 @@ initializePassport(
   }
 );
 
-// Middleware to check if user is not authenticated
-function checkNotAuthenticated(req, res, next) {
-  if (req.isAuthenticated()) {
-    return res.redirect('/');
-  }
-  next();
-}
-
 // Signup route
 app.post('/signup', checkNotAuthenticated, async (req, res) => {
   const { firstName, lastName, email, password } = req.body;
@@ -89,7 +88,7 @@ app.post('/signup', checkNotAuthenticated, async (req, res) => {
   // Hash the password
   const hashedPassword = await bcrypt.hash(password, 10);
 
-  const client = await connectWithRetry();
+  const client = await connect();
   try {
     // Check if users table exists, create if it doesn't
     await client.query(`
@@ -100,7 +99,7 @@ app.post('/signup', checkNotAuthenticated, async (req, res) => {
         email VARCHAR(255),
         password VARCHAR(255),
         date DATE DEFAULT CURRENT_DATE
-      );
+      )
     `);
 
     // Check if email is already registered
@@ -110,17 +109,21 @@ app.post('/signup', checkNotAuthenticated, async (req, res) => {
     }
 
     // Insert new user into the users table
-    await client.query('INSERT INTO users (first_name, last_name, email, password) VALUES ($1, $2, $3, $4)', [firstName, lastName, email, hashedPassword]);
+    await client.query('INSERT INTO users (first_name, last_name, email, password) VALUES ($1, $2, $3, $4)', [
+      firstName,
+      lastName,
+      email,
+      hashedPassword
+    ]);
 
     res.status(201).json({ message: 'User registered successfully!' });
   } catch (error) {
-    console.error(error);
+    console.error('Error during signup:', error);
     res.status(500).json({ message: 'Internal Server Error' });
   } finally {
     client.release();
-  } 
+  }
 });
-
 
 async function connectWithRetry(retries = 5, delay = 2000) {
   for (let i = 0; i < retries; i++) {
