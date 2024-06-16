@@ -11,20 +11,17 @@ const methodOverride = require('method-override');
 const path = require('path');
 const initializePassport = require('./passport-config');
 
-const app = express();
+const app = express(); 
 
-// PostgreSQL connection configuration
+// PostgreSQL connection configuration 
 const pool = new Pool({
-  user: process.env.POSTGRES_USER,
-  host: process.env.POSTGRES_HOST,
-  database: process.env.POSTGRES_DATABASE,
-  password: process.env.POSTGRES_PASSWORD,
-  port: process.env.POSTGRES_PORT || 5432, // default PostgreSQL port
+  connectionString: process.env.POSTGRES_URL,
   ssl: {
-    rejectUnauthorized: false // This is necessary for self-signed certificates
+    rejectUnauthorized: false // necessary for self-signed certificates 
   },
   connectionTimeoutMillis: 30000, // Increase timeout to 30 seconds
-}); 
+});
+
 
 // Middleware
 app.use(express.json());
@@ -63,7 +60,7 @@ initializePassport(
       const { rows } = await client.query('SELECT * FROM users WHERE email = $1', [email]);
       return rows[0];
     } finally {
-      client.release();
+      client.release(); 
     }
   },
   async (id) => {
@@ -121,7 +118,7 @@ app.post('/signup', checkNotAuthenticated, async (req, res) => {
     res.status(500).json({ message: 'Internal Server Error' });
   } finally {
     client.release();
-  }
+  } 
 });
 
 
@@ -133,12 +130,15 @@ async function connectWithRetry(retries = 5, delay = 2000) {
       return client;
     } catch (error) {
       console.error(`Database connection failed (attempt ${i + 1}): ${error.message}`);
+      if (error.code === 'ENOTFOUND') {
+        console.log('Endpoint not found. Please check your database host.');
+      }
       if (i < retries - 1) {
         console.log(`Retrying in ${delay / 1000} seconds...`);
         await new Promise(res => setTimeout(res, delay));
       } else {
         throw error;
-      }
+      } 
     }
   }
 }
@@ -151,7 +151,7 @@ app.post('/login', checkNotAuthenticated, async (req, res, next) => {
     try {
       // Check if users table exists, create if it doesn't
       await client.query(`
-        CREATE TABLE IF NOT EXISTS users (
+        CREATE TABLE IF NOT EXISTS users1 (
           id SERIAL PRIMARY KEY,
           first_name VARCHAR(100),
           last_name VARCHAR(100),
@@ -191,6 +191,7 @@ app.post('/login', checkNotAuthenticated, async (req, res, next) => {
   }
 });
 
+
 // Logout route
 app.delete('/logout', (req, res) => {
   req.logout((err) => {
@@ -203,7 +204,7 @@ app.delete('/logout', (req, res) => {
   });
 });
 
-// Products Page
+// Products Page 
 app.get('/products', checkAuthenticated, (req, res) => {
   res.sendFile(__dirname + '/views/products.html');
 });
