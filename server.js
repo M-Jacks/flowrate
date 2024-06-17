@@ -210,7 +210,7 @@ app.delete('/logout', (req, res) => {
 
 // Products Page 
 app.get('/products', checkAuthenticated, (req, res) => {
-  res.sendFile(__dirname + '/views/products.html');
+  res.sendFile(path.join(__dirname, 'views', 'products.html'));
 });
 
 
@@ -268,12 +268,12 @@ app.post('/products/add', checkAuthenticated, async (req, res) => {
 
 // Home page route
 app.get('/', checkAuthenticated, (req, res) => {
-  res.sendFile(__dirname + '/views/products.html');
+  res.sendFile(path.join(__dirname, 'views', 'products.html'));
 });
 
 // Login page route
 app.get('/login', (req, res) => {
-  res.sendFile(__dirname + '/views/index.html');
+  res.sendFile(path.join(__dirname, 'views', 'index.html'));
 });
 
 
