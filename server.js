@@ -11,22 +11,17 @@ const methodOverride = require('method-override');
 const path = require('path');
 const initializePassport = require('./passport-config');
 
-const app = express();
+const app = express(); 
 
-// PostgreSQL connection configuration
+// PostgreSQL connection configuration 
 const pool = new Pool({
   connectionString: process.env.POSTGRES_URL,
   ssl: {
-    rejectUnauthorized: false // necessary for self-signed certificates
+    rejectUnauthorized: false // necessary for self-signed certificates 
   },
-  connectionTimeoutMillis: 30000 // Increase timeout to 30 seconds
+  connectionTimeoutMillis: 30000, // Increase timeout to 30 seconds
 });
 
-async function connect() {
-  const client = await pool.connect();
-  console.log('Connected to PostgreSQL database');
-  return client;
-}
 
 // Middleware
 app.use(express.json());
@@ -38,17 +33,15 @@ if (!process.env.SESSION_SECRET) {
 } else {
   console.log('SESSION_SECRET is defined!');
 }
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET,
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-      secure: process.env.NODE_ENV === 'production', // Secure cookies in production
-      maxAge: 60000 // Set cookie expiration (example: 1 minute)
-    }
-  })
-);
+app.use(session({
+  secret: process.env.SESSION_SECRET,
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: process.env.NODE_ENV === 'production', // Secure cookies in production
+    maxAge: 60000 // Set cookie expiration (example: 1 minute)
+  }
+}));
 
 app.use(passport.initialize());
 app.use(passport.session());
@@ -62,16 +55,16 @@ app.use(express.static(path.join(__dirname, 'views')));
 initializePassport(
   passport,
   async (email) => {
-    const client = await connect();
+    const client = await pool.connect();
     try {
       const { rows } = await client.query('SELECT * FROM users WHERE email = $1', [email]);
       return rows[0];
     } finally {
-      client.release();
+      client.release(); 
     }
   },
   async (id) => {
-    const client = await connect();
+    const client = await pool.connect();
     try {
       const { rows } = await client.query('SELECT * FROM users WHERE id = $1', [id]);
       return rows[0];
@@ -81,6 +74,14 @@ initializePassport(
   }
 );
 
+// Middleware to check if user is not authenticated
+function checkNotAuthenticated(req, res, next) {
+  if (req.isAuthenticated()) {
+    return res.redirect('/');
+  }
+  next();
+}
+
 // Signup route
 app.post('/signup', checkNotAuthenticated, async (req, res) => {
   const { firstName, lastName, email, password } = req.body;
@@ -88,7 +89,7 @@ app.post('/signup', checkNotAuthenticated, async (req, res) => {
   // Hash the password
   const hashedPassword = await bcrypt.hash(password, 10);
 
-  const client = await connect();
+  const client = await connectWithRetry();
   try {
     // Check if users table exists, create if it doesn't
     await client.query(`
@@ -99,7 +100,7 @@ app.post('/signup', checkNotAuthenticated, async (req, res) => {
         email VARCHAR(255),
         password VARCHAR(255),
         date DATE DEFAULT CURRENT_DATE
-      )
+      );
     `);
 
     // Check if email is already registered
@@ -109,21 +110,18 @@ app.post('/signup', checkNotAuthenticated, async (req, res) => {
     }
 
     // Insert new user into the users table
-    await client.query('INSERT INTO users (first_name, last_name, email, password) VALUES ($1, $2, $3, $4)', [
-      firstName,
-      lastName,
-      email,
-      hashedPassword
-    ]);
+    await client.query('INSERT INTO users (first_name, last_name, email, password) VALUES ($1, $2, $3, $4)', [firstName, lastName, email, hashedPassword]);
 
     res.status(201).json({ message: 'User registered successfully!' });
   } catch (error) {
-    console.error('Error during signup:', error);
+    console.error(error);
     res.status(500).json({ message: 'Internal Server Error' });
   } finally {
     client.release();
-  }
+    console.log('Database connection released');
+  } 
 });
+
 
 async function connectWithRetry(retries = 5, delay = 2000) {
   for (let i = 0; i < retries; i++) {
@@ -145,7 +143,6 @@ async function connectWithRetry(retries = 5, delay = 2000) {
     }
   }
 }
-
 
 app.post('/login', checkNotAuthenticated, async (req, res, next) => {
   console.log('Received login request');
@@ -170,7 +167,7 @@ app.post('/login', checkNotAuthenticated, async (req, res, next) => {
       passport.authenticate('local', (err, user, info) => {
         if (err) {
           console.error('Error during authentication', err);
-          return res.status(500).json({ message: 'Internal Server Error: Authentication' });
+          return res.status(500).json({ message: 'Internal Server Error 1' });
         }
         if (!user) {
           console.log('Authentication failed: User not found');
@@ -179,7 +176,7 @@ app.post('/login', checkNotAuthenticated, async (req, res, next) => {
         req.logIn(user, (err) => {
           if (err) {
             console.error('Error during login', err);
-            return res.status(500).json({ message: 'Internal Server Error: Login' });
+            return res.status(500).json({ message: 'Internal Server Error 2' });
           }
           console.log('User logged in successfully');
           return res.status(200).json({ message: 'Login successful' });
@@ -191,9 +188,9 @@ app.post('/login', checkNotAuthenticated, async (req, res, next) => {
     }
   } catch (error) {
     console.error('Error during database operation', error);
-    res.status(500).json({ message: 'Internal Server Error: Database' });
+    res.status(500).json({ message: 'Internal Server Error 3' });
   }
-});
+}); 
 
 
 
@@ -215,7 +212,6 @@ app.get('/products', checkAuthenticated, (req, res) => {
 });
 
 
-// Get route for products table data
 // Get route for products table data
 app.get('/productstable', checkAuthenticated, async (req, res) => {
   const productType = req.query.type || 'Core';
@@ -274,7 +270,7 @@ app.get('/', checkAuthenticated, (req, res) => {
 });
 
 // Login page route
-app.get('/login',  (req, res) => { 
+app.get('/login', (req, res) => {
   res.sendFile(__dirname + '/views/index.html');
 });
 
@@ -282,7 +278,7 @@ app.get('/login',  (req, res) => {
 
 
 // Analysis Page //Get all tests
-app.get('/teststable',  checkAuthenticated, async (req, res) => {
+app.get('/teststable', checkAuthenticated, async (req, res) => {
   const sql = 'SELECT * FROM tableoftestsv1';
 
   try {
@@ -404,30 +400,30 @@ app.post('/add-test-data', checkAuthenticated, async (req, res) => {
                (Product, Device_Id, Board_Version, Firmware, Profile, Test_Engineer, Power_Source, Pump_Type, Pump_Id) 
                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`;
 
-                const values = [
-                  testData.productType,
-                  testData.DeviceIMEI,
-                  testData.boardVersion,
-                  testData.firmware,
-                  testData.profile,
-                  testData.testEngineer,
-                  testData.powerSource,
-                  testData.pumpType,
-                  testData.pumpserial,
-                ];
+  const values = [
+    testData.productType,
+    testData.DeviceIMEI,
+    testData.boardVersion,
+    testData.firmware,
+    testData.profile,
+    testData.testEngineer,
+    testData.powerSource,
+    testData.pumpType,
+    testData.pumpserial,
+  ];
 
-                try {
-                  const client = await pool.connect();
-                  try {
-                    await client.query(sql, values);
-                    res.status(200).send('<script>window.location.reload();</script>Test added successfully');
-                  } finally {
-                    client.release();
-                  }
-                } catch (error) {
-                  console.error('Error adding test data:', error);
-                  res.status(500).send('Internal Server Error');
-                }
+  try {
+    const client = await pool.connect();
+    try {
+      await client.query(sql, values);
+      res.status(200).send('<script>window.location.reload();</script>Test added successfully');
+    } finally {
+      client.release();
+    }
+  } catch (error) {
+    console.error('Error adding test data:', error);
+    res.status(500).send('Internal Server Error');
+  }
 });
 
 // PATCH route to update test data
@@ -476,13 +472,13 @@ app.patch('/update-test-data', checkAuthenticated, async (req, res) => {
 
 
 // Results Page
-app.get('/results',  checkAuthenticated, (req, res) => {
+app.get('/results', checkAuthenticated, (req, res) => {
   res.sendFile(__dirname + '/views/results.html');
 });
 
 //fetch results data based on test ID
 // GET route to fetch results data based on test ID (comparison page)
-app.get('/resultstable',  checkAuthenticated, async (req, res) => {
+app.get('/resultstable', checkAuthenticated, async (req, res) => {
   const testId = req.query.testId; // Access testId from query parameters
   const sql = 'SELECT head, voltage, current, t1, t2, time, power, flowrate, efficiency FROM results WHERE test_id = $1';
 
@@ -509,7 +505,7 @@ app.get('/resultstable',  checkAuthenticated, async (req, res) => {
 });
 
 // GET route to fetch results data based on test ID and product ID (Tests page)
-app.get('/resultstable/:testId/:prodId',  checkAuthenticated, async (req, res) => {
+app.get('/resultstable/:testId/:prodId', checkAuthenticated, async (req, res) => {
   const { testId, prodId } = req.params;
   const sql = 'SELECT head, voltage, current, t1, t2, time, power, flowrate, efficiency FROM results WHERE test_id = $1';
 
@@ -552,7 +548,7 @@ app.post('/saveResults', checkAuthenticated, async (req, res) => {
   // Generate a query with multiple rows
   const placeholders = allValues.map((_, i) => `($${i * 10 + 1}, $${i * 10 + 2}, $${i * 10 + 3}, $${i * 10 + 4}, $${i * 10 + 5}, $${i * 10 + 6}, $${i * 10 + 7}, $${i * 10 + 8}, $${i * 10 + 9}, $${i * 10 + 10})`).join(', ');
   const query = `INSERT INTO results (test_id, head, voltage, current, t1, t2, time, power, flowrate, efficiency) VALUES ${placeholders}`;
-  
+
   // Flatten the allValues array
   const flattenedValues = allValues.flat();
 
@@ -662,11 +658,11 @@ app.put('/reports/:id', checkAuthenticated, async (req, res) => {
 });
 
 //comparison page
-app.get('/comparison',  checkAuthenticated, 
+app.get('/comparison', checkAuthenticated,
 
-(req, res) => {
-  res.sendFile(__dirname + '/views/comparison.html');
-});
+  (req, res) => {
+    res.sendFile(__dirname + '/views/comparison.html');
+  });
 
 // Authentication check middleware
 function checkAuthenticated(req, res, next) {
