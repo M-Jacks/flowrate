@@ -5,12 +5,12 @@
     { "src": "server.js", "use": "@vercel/node" }
   ],
   "routes": [
-    { "src": "/login", "dest": "/views/index.html" },
-    { "src": "/tests", "dest": "/views/tests.html" },
-    { "src": "/results", "dest": "/views/results.html" },
+    { "src": "/login", "dest": "/server.js" }, 
+    { "src": "/tests", "dest": "/server.js" }, 
+    { "src": "/results", "dest": "/server.js" }, 
     { "src": "/products", "dest": "/server.js" }, 
-    { "src": "/reports", "dest": "/views/reports.html" },
-    { "src": "/comparison", "dest": "/views/comparison.html" },
+    { "src": "/reports", "dest": "/server.js" }, 
+    { "src": "/comparison", "dest": "/server.js" }, 
     { "src": "/(.*)", "dest": "/server.js" }
   ]
 }
