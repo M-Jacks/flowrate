@@ -19,7 +19,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 3000);  // Increased display time to 3 seconds for better user experience
   };
 
-  // Event listener for the login form submission
   loginForm.addEventListener('submit', async (e) => {
     e.preventDefault(); // Prevent the default form submission behavior
     const email = document.getElementById('loginEmail').value;
@@ -32,7 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
       });
-
+  
       const result = await response.json();
       if (response.ok) {
         // If login is successful, display success message and redirect to products page
@@ -42,7 +41,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 1000);
       } else {
         // If login fails and user is not registered, show the registration form
-        if (result.message === 'Account does not exist') {
+        if (result.message === 'No user with that email') {
           setTimeout(() => {
             wrapper.classList.add('active');
           }, 500);
@@ -54,6 +53,7 @@ document.addEventListener('DOMContentLoaded', () => {
       displayMessage('An error occurred during login', loginMessage, 'error');
     }
   });
+  
 
   // Event listener for the signup form submission
   signupForm.addEventListener('submit', async (e) => {

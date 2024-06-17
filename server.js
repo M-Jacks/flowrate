@@ -144,6 +144,7 @@ async function connectWithRetry(retries = 5, delay = 2000) {
   }
 }
 
+
 app.post('/login', checkNotAuthenticated, async (req, res, next) => {
   console.log('Received login request');
 
@@ -153,8 +154,8 @@ app.post('/login', checkNotAuthenticated, async (req, res, next) => {
       // Check if users table exists, create if it doesn't
       await client.query(`
         CREATE TABLE IF NOT EXISTS users (
-          id SERIAL PRIMARY KEY, 
-          first_name VARCHAR(100), 
+          id SERIAL PRIMARY KEY,
+          first_name VARCHAR(100),
           last_name VARCHAR(100),
           email VARCHAR(255),
           password VARCHAR(255),
@@ -166,17 +167,17 @@ app.post('/login', checkNotAuthenticated, async (req, res, next) => {
       // Authenticate user
       passport.authenticate('local', (err, user, info) => {
         if (err) {
-          console.error('Error during authentication', err);
-          return res.status(500).json({ message: 'Internal Server Error 1' });
+          console.error('Error during authentication:', err);
+          return res.status(500).json({ message: 'Internal Server Error during authentication' });
         }
         if (!user) {
-          console.log('Authentication failed: User not found');
+          console.log('Authentication failed:', info.message);
           return res.status(400).json({ message: info.message });
         }
         req.logIn(user, (err) => {
           if (err) {
-            console.error('Error during login', err);
-            return res.status(500).json({ message: 'Internal Server Error 2' });
+            console.error('Error during login:', err);
+            return res.status(500).json({ message: 'Internal Server Error during login' });
           }
           console.log('User logged in successfully');
           return res.status(200).json({ message: 'Login successful' });
@@ -187,10 +188,11 @@ app.post('/login', checkNotAuthenticated, async (req, res, next) => {
       console.log('Database connection released');
     }
   } catch (error) {
-    console.error('Error during database operation', error);
-    res.status(500).json({ message: 'Internal Server Error 3' });
+    console.error('Error during database operation:', error);
+    res.status(500).json({ message: 'Internal Server Error during database operation' });
   }
-}); 
+});
+
 
 
 
