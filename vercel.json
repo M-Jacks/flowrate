@@ -1,16 +1,17 @@
+
 {
   "version": 2,
   "builds": [
     { "src": "server.js", "use": "@vercel/node" }
   ],
   "routes": [
-    { "src": "/api/(.*)", "dest": "/server.js" },  
     { "src": "/login", "dest": "/views/index.html" },
     { "src": "/tests", "dest": "/views/tests.html" },
     { "src": "/results", "dest": "/views/results.html" },
     { "src": "/products", "dest": "/views/products.html" },
     { "src": "/reports", "dest": "/views/reports.html" },
     { "src": "/comparison", "dest": "/views/comparison.html" },
-    { "src": "/(.*)", "dest": "/views/index.html" }  
+    { "src": "/(.*)", "dest": "/server.js" }
   ]
 }
+    
