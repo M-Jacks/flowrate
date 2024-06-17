@@ -83,7 +83,7 @@ function checkNotAuthenticated(req, res, next) {
 }
 
 // Signup route
-app.post('/signup', checkNotAuthenticated, async (req, res) => {
+app.post('/api/signup', checkNotAuthenticated, async (req, res) => {
   const { firstName, lastName, email, password } = req.body;
 
   // Hash the password
@@ -145,7 +145,7 @@ async function connectWithRetry(retries = 5, delay = 2000) {
 }
 
 
-app.post('/login', checkNotAuthenticated, async (req, res, next) => {
+app.post('/api/login', checkNotAuthenticated, async (req, res, next) => {
   console.log('Received login request');
 
   try {

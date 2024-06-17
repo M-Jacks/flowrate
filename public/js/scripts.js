@@ -18,7 +18,6 @@ document.addEventListener('DOMContentLoaded', () => {
       element.style.display = 'none';
     }, 3000);  // Increased display time to 3 seconds for better user experience
   };
-
   loginForm.addEventListener('submit', async (e) => {
     e.preventDefault(); // Prevent the default form submission behavior
     const email = document.getElementById('loginEmail').value;
@@ -26,7 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     try {
       // Send a POST request to the server for login
-      const response = await fetch('/login', {
+      const response = await fetch('/api/login', {  // Update to match the API endpoint
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
@@ -54,40 +53,38 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
   
-
   // Event listener for the signup form submission
   signupForm.addEventListener('submit', async (e) => {
-    e.preventDefault(); // Prevent the default form submission behavior
     e.preventDefault(); // Prevent the default form submission behavior
     const firstName = document.getElementById('FirstName').value;
     const lastName  = document.getElementById('LastName').value;
     const email = document.getElementById('signupEmail').value;
     const password = document.getElementById('signupPassword').value;
     const confirmPassword = document.getElementById('confirmPassword').value;
-
-    const allowedDomain = 'sunculture.com'; // Set the allowed email domain 
+  
+    const allowedDomain = 'lture.com'; // Set the allowed email domain 
     const emailDomain = email.split('@')[1];
-
+  
     // Check if the email domain is allowed
     if (emailDomain !== allowedDomain) {
       displayMessage('Email not allowed!', signupMessage, 'error');
       return;
     }
-
+  
     // Check if passwords match
     if (password !== confirmPassword) {
       displayMessage('Passwords do not match!', signupMessage, 'error');
       return;
     }
-
+  
     try {
       // Send a POST request to the server for signup
-      const response = await fetch('/signup', {
+      const response = await fetch('/api/signup', {  // Update to match the API endpoint
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ firstName, lastName, email, password }),
       });
-
+  
       const result = await response.json();
       if (response.ok) {
         // If signup is successful, display success message and switch to the login form
