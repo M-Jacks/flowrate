@@ -33,6 +33,7 @@ if (!process.env.SESSION_SECRET) {
 } else {
   console.log('SESSION_SECRET is defined!');
 }
+
 app.use(session({
   secret: process.env.SESSION_SECRET,
   resave: false,
@@ -60,7 +61,7 @@ initializePassport(
       const { rows } = await client.query('SELECT * FROM users WHERE email = $1', [email]);
       return rows[0];
     } finally {
-      client.release(); 
+      client.release();
     }
   },
   async (id) => {
@@ -73,7 +74,6 @@ initializePassport(
     }
   }
 );
-
 
 // Signup route
 app.post('/sign-up', checkNotAuthenticated, async (req, res) => {
@@ -203,11 +203,11 @@ app.delete('/logout', (req, res) => {
 
 // Products Page 
 app.get('/products', checkAuthenticated, (req, res) => {
+  console.log('Serving products page');
   res.sendFile(path.join(__dirname, 'views', 'products.html'));
 });
 
-
-// Get route for products table data
+// Get route to populate products table data on products page
 app.get('/productstable',  async (req, res) => {
   const productType = req.query.type || 'Core';
   const sql = `SELECT product_id, product_name FROM productlist WHERE type = $1`;
@@ -654,8 +654,10 @@ app.get('/comparison', checkAuthenticated,
 // Authentication check middleware
 function checkAuthenticated(req, res, next) {
   if (req.isAuthenticated()) {
+    console.log('User is authenticated');
     return next();
   }
+  console.log('User is not authenticated');
   res.redirect('/login');
 }
 
