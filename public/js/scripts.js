@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     try {
       // Send a POST request to the server for login
-      const response = await fetch('/api/login', {  // Update to match the API endpoint
+      const response = await fetch('/loggin', {  // Update to match the API endpoint
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
