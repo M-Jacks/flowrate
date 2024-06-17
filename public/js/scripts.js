@@ -62,7 +62,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const password = document.getElementById('signupPassword').value;
     const confirmPassword = document.getElementById('confirmPassword').value;
   
-    const allowedDomain = 'lture.com'; // Set the allowed email domain 
+    const allowedDomain = 'sunculture.com'; // Set the allowed email domain 
     const emailDomain = email.split('@')[1];
   
     // Check if the email domain is allowed
@@ -79,7 +79,7 @@ document.addEventListener('DOMContentLoaded', () => {
   
     try {
       // Send a POST request to the server for signup
-      const response = await fetch('/api/signup', {  // Update to match the API endpoint
+      const response = await fetch('/sign-up', {  // Update to match the API endpoint
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ firstName, lastName, email, password }),
