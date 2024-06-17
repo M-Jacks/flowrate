@@ -74,13 +74,6 @@ initializePassport(
   }
 );
 
-// Middleware to check if user is not authenticated
-function checkNotAuthenticated(req, res, next) {
-  if (req.isAuthenticated()) {
-    return res.redirect('/');
-  }
-  next();
-}
 
 // Signup route
 app.post('/sign-up', checkNotAuthenticated, async (req, res) => {
@@ -215,7 +208,7 @@ app.get('/products', checkAuthenticated, (req, res) => {
 
 
 // Get route for products table data
-app.get('/productstable', checkAuthenticated, async (req, res) => {
+app.get('/productstable',  async (req, res) => {
   const productType = req.query.type || 'Core';
   const sql = `SELECT product_id, product_name FROM productlist WHERE type = $1`;
   try {
@@ -261,23 +254,15 @@ app.post('/products/add', checkAuthenticated, async (req, res) => {
   }
 });
 
-
-
-
-
-
 // Home page route
 app.get('/', checkAuthenticated, (req, res) => {
-  res.sendFile(path.join(__dirname, 'views', 'products.html'));
+  res.sendFile(path.join(__dirname, 'views', 'productds.html'));
 });
 
 // Login page route
-app.get('/login', (req, res) => {
+app.get('/login', checkNotAuthenticated, (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'index.html'));
 });
-
-
-
 
 // Analysis Page //Get all tests
 app.get('/teststable', checkAuthenticated, async (req, res) => {
@@ -680,6 +665,7 @@ function checkNotAuthenticated(req, res, next) {
   }
   next();
 }
+
 
 // Start server
 const PORT = process.env.PORT || 3000;
