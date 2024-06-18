@@ -76,7 +76,7 @@ initializePassport(
 );
 
 // Signup route
-app.post('/sign-up', checkNotAuthenticated, async (req, res) => {
+app.post('/sign-up', async (req, res) => {
   const { firstName, lastName, email, password } = req.body;
 
   // Hash the password
@@ -138,7 +138,7 @@ async function connectWithRetry(retries = 5, delay = 2000) {
 }
 
 
-app.post('/loggin', checkNotAuthenticated, async (req, res, next) => {
+app.post('/loggin', async (req, res, next) => {
   console.log('Received login request');
 
   try {
@@ -202,7 +202,7 @@ app.delete('/logout', (req, res) => {
 });
 
 // Products Page 
-app.get('/products', checkAuthenticated, (req, res) => {
+app.get('/products',  (req, res) => {
   console.log('Serving products page');
   res.sendFile(path.join(__dirname, 'views', 'products.html'));
 });
@@ -224,7 +224,7 @@ app.get('/productstable',  async (req, res) => {
 
 
 // Adding a new product
-app.post('/products/add', checkAuthenticated, async (req, res) => {
+app.post('/products/add',  async (req, res) => {
   try {
     // Retrieve the product details from the request body
     const { productName, productType } = req.body;
@@ -255,17 +255,17 @@ app.post('/products/add', checkAuthenticated, async (req, res) => {
 });
 
 // Home page route
-app.get('/', checkAuthenticated, (req, res) => {
+app.get('/',  (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'productds.html'));
 });
 
 // Login page route
-app.get('/login', checkNotAuthenticated, (req, res) => {
+app.get('/login', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'index.html'));
 });
 
 // Analysis Page //Get all tests
-app.get('/teststable', checkAuthenticated, async (req, res) => {
+app.get('/teststable',  async (req, res) => {
   const sql = 'SELECT * FROM tableoftestsv1';
 
   try {
@@ -287,7 +287,7 @@ app.get('/teststable', checkAuthenticated, async (req, res) => {
 });
 
 // Define route to fetch test data by test ID
-app.get('/teststable/:pId', checkAuthenticated, async (req, res) => {
+app.get('/teststable/:pId',  async (req, res) => {
   const productName = req.params.pId;
   console.log(productName);
 
@@ -317,7 +317,7 @@ app.get('/teststable/:pId', checkAuthenticated, async (req, res) => {
 
 
 // Define route to fetch test data by test ID
-app.get('/testsbyId', checkAuthenticated, async (req, res) => {
+app.get('/testsbyId',  async (req, res) => {
   const testId = req.query.testId;
   const sql = 'SELECT * FROM tableoftestsv1 WHERE Test_Id = $1';
 
@@ -342,11 +342,11 @@ app.get('/testsbyId', checkAuthenticated, async (req, res) => {
 });
 
 
-app.get('/tests', checkAuthenticated, (req, res) => {
+app.get('/tests',  (req, res) => {
   res.sendFile(__dirname + '/views/tests.html');
 });
 // GET route to fetch test data based on product ID
-app.get('/teststable/:pId', checkAuthenticated, async (req, res) => {
+app.get('/teststable/:pId',  async (req, res) => {
   const productName = req.params.pId;
   console.log(productName);
 
@@ -380,7 +380,7 @@ app.get('/teststable/:pId', checkAuthenticated, async (req, res) => {
 
 //add test
 // POST route to add test data
-app.post('/add-test-data', checkAuthenticated, async (req, res) => {
+app.post('/add-test-data',  async (req, res) => {
   const testData = req.body;
 
   const sql = `INSERT INTO tableoftestsv1 
@@ -414,7 +414,7 @@ app.post('/add-test-data', checkAuthenticated, async (req, res) => {
 });
 
 // PATCH route to update test data
-app.patch('/update-test-data', checkAuthenticated, async (req, res) => {
+app.patch('/update-test-data',  async (req, res) => {
   const testId = parseInt(req.query.testId);
   const updatedData = req.body;
 
@@ -459,13 +459,13 @@ app.patch('/update-test-data', checkAuthenticated, async (req, res) => {
 
 
 // Results Page
-app.get('/results', checkAuthenticated, (req, res) => {
+app.get('/results',  (req, res) => {
   res.sendFile(__dirname + '/views/results.html');
 });
 
 //fetch results data based on test ID
 // GET route to fetch results data based on test ID (comparison page)
-app.get('/resultstable', checkAuthenticated, async (req, res) => {
+app.get('/resultstable',  async (req, res) => {
   const testId = req.query.testId; // Access testId from query parameters
   const sql = 'SELECT head, voltage, current, t1, t2, time, power, flowrate, efficiency FROM results WHERE test_id = $1';
 
@@ -492,7 +492,7 @@ app.get('/resultstable', checkAuthenticated, async (req, res) => {
 });
 
 // GET route to fetch results data based on test ID and product ID (Tests page)
-app.get('/resultstable/:testId/:prodId', checkAuthenticated, async (req, res) => {
+app.get('/resultstable/:testId/:prodId',  async (req, res) => {
   const { testId, prodId } = req.params;
   const sql = 'SELECT head, voltage, current, t1, t2, time, power, flowrate, efficiency FROM results WHERE test_id = $1';
 
@@ -519,7 +519,7 @@ app.get('/resultstable/:testId/:prodId', checkAuthenticated, async (req, res) =>
 });
 
 // POST route to save results
-app.post('/saveResults', checkAuthenticated, async (req, res) => {
+app.post('/saveResults',  async (req, res) => {
   const jsonData = req.body;
   const allValues = [];
 
@@ -560,12 +560,12 @@ app.post('/saveResults', checkAuthenticated, async (req, res) => {
 
 //Reports
 // GET route to serve reports page
-app.get('/reports', checkAuthenticated, (req, res) => {
+app.get('/reports',  (req, res) => {
   res.sendFile(__dirname + '/views/reports.html');
 });
 
 // GET route to fetch all reports
-app.get('/getreports', checkAuthenticated, async (req, res) => {
+app.get('/getreports',  async (req, res) => {
   const productType = req.query.type || 'core';
   const sql = `SELECT * FROM test_reports`;
 
@@ -584,7 +584,7 @@ app.get('/getreports', checkAuthenticated, async (req, res) => {
 });
 
 // POST route to add a new report
-app.post('/reports', checkAuthenticated, async (req, res) => {
+app.post('/reports',  async (req, res) => {
   const { title, description } = req.body;
   const date = new Date();
   const query = 'INSERT INTO test_reports (title, description, date) VALUES ($1, $2, $3)';
@@ -604,7 +604,7 @@ app.post('/reports', checkAuthenticated, async (req, res) => {
 });
 
 // DELETE route to delete a report
-app.delete('/reports/:id', checkAuthenticated, async (req, res) => {
+app.delete('/reports/:id',  async (req, res) => {
   const { id } = req.params;
   const query = 'DELETE FROM test_reports WHERE id = $1';
 
@@ -624,7 +624,7 @@ app.delete('/reports/:id', checkAuthenticated, async (req, res) => {
 });
 
 // PUT route to update a report
-app.put('/reports/:id', checkAuthenticated, async (req, res) => {
+app.put('/reports/:id',  async (req, res) => {
   const { id } = req.params;
   const { title, description } = req.body;
   const query = 'UPDATE test_reports SET title = $1, description = $2 WHERE id = $3';
@@ -645,32 +645,9 @@ app.put('/reports/:id', checkAuthenticated, async (req, res) => {
 });
 
 //comparison page
-app.get('/comparison', checkAuthenticated,
+app.get('/comparison', 
 
   (req, res) => {
     res.sendFile(__dirname + '/views/comparison.html');
   });
 
-// Authentication check middleware
-function checkAuthenticated(req, res, next) {
-  if (req.isAuthenticated()) {
-    console.log('User is authenticated');
-    return next();
-  }
-  console.log('User is not authenticated');
-  res.redirect('/login');
-}
-
-function checkNotAuthenticated(req, res, next) {
-  if (req.isAuthenticated()) {
-    return res.redirect('/');
-  }
-  next();
-}
-
-
-// Start server
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});

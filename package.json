@@ -15,6 +15,7 @@
     "bcrypt": "^5.1.1",
     "body-parse": "^0.1.0",
     "body-parser": "^1.20.2",
+    "connect-redis": "^7.1.1",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "ejs": "^3.1.10",
@@ -27,6 +28,7 @@
     "nodemon": "^3.1.0",
     "passport": "^0.7.0",
     "passport-local": "^1.0.0",
-    "pg": "^8.11.5"
+    "pg": "^8.11.5",
+    "redis": "^4.6.14"
   }
 }

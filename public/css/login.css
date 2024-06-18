@@ -101,6 +101,20 @@ header {
     color: aliceblue;
 }
 
+/* Styling for the welcome div */
+.welcome {
+    position: fixed;
+    top: 120px; /* Same as .wrapper to align them horizontally */
+    left: 40px; /* Add some space from the left edge */
+    width: 400px; /* Set a width for the welcome div */
+    padding: 20px;
+    background-color: rgba(255, 255, 255, 0.8); /* Semi-transparent background */
+    border: 2px solid grey;
+    border-radius: 20px;
+    box-shadow: 0 0 30px rgba(0, 0, 0, .5);
+    z-index: 1; /* Ensure it appears above other elements */
+}
+
 .wrapper {
     width: 455px;
     height: 650px;
@@ -113,10 +127,17 @@ header {
     justify-content: center;
     align-items: center;
     overflow: hidden;
-   /* margin-top: calc(50px + 10px); /* 100px is the height of the header, add 10px below it */
-    transform: scale(1);
+    transform: scale(0);
     transition: transform .5s ease, height .2s ease;
+    
+    /* Positioning */
+    position: fixed; 
+    top: 120px;
+    right: 40px;
+    z-index: 2; /* Ensure it appears above other elements */
 }
+
+
 
 .wrapper.active-popup{
     transform: scale(1);
